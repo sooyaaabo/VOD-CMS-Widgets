@@ -1181,7 +1181,7 @@ WidgetMetadata = {
       cacheDuration: 3600,
     },
   ],
-  version: "1.0.17",
+  version: "1.0.18",
   requiredVersion: "0.0.1",
   description: "解析豆瓣想看、在看、已看以及根据个人数据生成的个性化推荐【五折码：CHEAP.5;七折码：CHEAP】",
   author: "huangxd",
@@ -1365,7 +1365,16 @@ async function fetchImdbItems(scItems) {
 
       // 遍历 tmdbDatas，寻找匹配的元素
       for (let i = 0; i < tmdbDatas.length; i++) {
-        const tmdbYear = scItem.type === "tv" ? tmdbDatas[i].first_air_date.split("-")[0] : tmdbDatas[i].release_date.split("-")[0];
+        const dateStr =
+          scItem.type === "tv"
+            ? tmdbDatas[i].first_air_date
+            : scItem.type === "movie"
+            ? tmdbDatas[i].release_date
+            : scItem.type === "multi"
+            ? tmdbDatas[i].first_air_date || tmdbDatas[i].release_date
+            : undefined;
+
+        const tmdbYear = dateStr ? dateStr.split("-")[0] : undefined;
         if ((scItem.title === tmdbDatas[i].title || scItem.title === tmdbDatas[i].name) && scItem.year == tmdbYear) {
           matchedItem = tmdbDatas[i];
           break; // 找到第一个匹配项后立即跳出循环
