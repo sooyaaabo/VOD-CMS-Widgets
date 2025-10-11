@@ -7,7 +7,7 @@ var WidgetMetadata = {
   description: "获取最新热门影片推荐",
   author: "两块",
   site: "https://github.com/2kuai/ForwardWidgets",
-  version: "1.1.7",
+  version: "1.1.8",
   requiredVersion: "0.0.1",
   modules: [
     {
@@ -308,7 +308,7 @@ var WidgetMetadata = {
           enumOptions: [
             { title: "正在上映", value: "nowplaying" },
             { title: "即将上映", value: "coming" },
-            { title: "历史票房", value: "historyRank" }
+            { title: "经典影片", value: "classics" }
           ]
         }
       ]
