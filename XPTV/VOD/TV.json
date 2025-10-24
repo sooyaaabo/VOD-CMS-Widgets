@@ -10,7 +10,7 @@
             "name": "TV-AGE动漫",
             "type": 3,
             "api": "csp_age",
-            "ext": "https://raw.githubusercontent.com/fangkuia/XPTV/main/js/age.js"
+            "ext": "https://gist.githubusercontent.com/occupy-pluto/e3a7bb98d5027d0f6dfa85fc2ac11a78/raw/6deb0475d295ac867ccb9c7cf3b1fb212a77abd7/agedm.js"
         },
         {
             "name": "TV-AnFuns",
@@ -34,7 +34,7 @@
             "name": "TV-LIBVIO",
             "type": 3,
             "api": "csp_libvio",
-            "ext": "https://raw.githubusercontent.com/fangkuia/XPTV/main/js/libvio.js"
+            "ext": "https://gist.githubusercontent.com/occupy-pluto/67cc3a53a26c631e32ed2f37e19e479d/raw/c5244f43a051335729ce33f10f2e82e2e899f0a5/libvio.js"
         },
         {
             "name": "TV-NO视频",
