@@ -1,3 +1,4 @@
+// 引用链接: https://raw.githubusercontent.com/fangkuia/XPTV/main/js/EXPORNTOONS.js
 const UA = 'Mozilla/5.0 (iPhone; CPU iPhone OS 18_2 like Mac OS X) AppleWebKit/604.1.14 (KHTML, like Gecko)'
 const cheerio = createCheerio()
 let appConfig = {
