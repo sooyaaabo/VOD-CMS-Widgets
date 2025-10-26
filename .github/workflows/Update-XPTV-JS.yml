@@ -1,4 +1,4 @@
-# 2025-07-21 09:00
+# 2025-10-26 18:00
 
 name: Update XPTV JS Files
 
@@ -29,7 +29,7 @@ jobs:
           [91jav]="https://raw.githubusercontent.com/Yswag/xptv-extensions/main/js/91jav.js"
           [avdb]="https://raw.githubusercontent.com/Yswag/xptv-extensions/main/js/avdb.js"
           [avtoday]="https://raw.githubusercontent.com/Yswag/xptv-extensions/main/js/avtoday.js"
-          [hanime]="https://raw.githubusercontent.com/Yswag/xptv-extensions/main/js/hanime.js"
+          [hanime]="https://raw.githubusercontent.com/fangkuia/XPTV/main/js/hanime.js"
           [hohoj]="https://raw.githubusercontent.com/Yswag/xptv-extensions/main/js/hohoj.js"
           [jable]="https://raw.githubusercontent.com/Yswag/xptv-extensions/main/js/jable.js"
           [javmove]="https://raw.githubusercontent.com/fangkuia/XPTV/main/js/javmove.js"
@@ -51,6 +51,8 @@ jobs:
           [hkdoll]="https://raw.githubusercontent.com/Yswag/xptv-extensions/main/js/hkdoll.js"
           [uaa]="https://raw.githubusercontent.com/fangkuia/XPTV/main/js/uua.js"
           [harunasan]="https://gist.githubusercontent.com/Yswag/d9f072b75dab5b1b107c523dd148eea3/raw/harunasan.js"
+          [EXPORNTOONS]="https://raw.githubusercontent.com/fangkuia/XPTV/main/js/EXPORNTOONS.js"
+          [SpankBang]="https://raw.githubusercontent.com/fangkuia/XPTV/main/js/SpankBang.js"
           [4kav]="https://raw.githubusercontent.com/Yswag/xptv-extensions/main/js/4kav.js"
           [age]="https://raw.githubusercontent.com/fangkuia/XPTV/main/js/age.js"
           [anfuns]="https://raw.githubusercontent.com/Yswag/xptv-extensions/main/js/anfuns.js"

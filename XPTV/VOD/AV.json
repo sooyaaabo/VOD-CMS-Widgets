@@ -19,10 +19,16 @@
             "ext": "https://raw.githubusercontent.com/Yswag/xptv-extensions/main/js/avtoday.js"
         },
         {
+            "name": "AV-EXPORNTOONS", 
+            "type": 3, 
+            "api": "csp_EXPORNTOONS",
+            "ext": "https://raw.githubusercontent.com/fangkuia/XPTV/main/js/EXPORNTOONS.js"
+        },
+        {
             "name": "AV-Hanime1",
             "type": 3,
             "api": "csp_Hanime1",
-            "ext": "https://raw.githubusercontent.com/Yswag/xptv-extensions/main/js/hanime.js"
+            "ext": "https://raw.githubusercontent.com/fangkuia/XPTV/main/js/hanime.js"
         },
         {
             "name": "AV-HoHoJ",
@@ -77,6 +83,12 @@
             "type": 3,
             "api": "csp_ppron",
             "ext": "https://raw.githubusercontent.com/fangkuia/XPTV/main/js/ppp.js"
+        },
+        {
+            "name": "AV-SpankBang", 
+            "type": 3, 
+            "api": "csp_SpankBang",
+            "ext": "https://raw.githubusercontent.com/fangkuia/XPTV/main/js/SpankBang.js"
         },
         {
             "name": "AV-SupJav",
