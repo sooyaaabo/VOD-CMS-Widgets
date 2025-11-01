@@ -7,8 +7,15 @@ var WidgetMetadata = {
   description: "获取最新热门影片推荐",
   author: "两块",
   site: "https://github.com/2kuai/ForwardWidgets",
-  version: "1.1.8",
+  version: "1.1.9",
   requiredVersion: "0.0.1",
+  globalParams: [
+    {
+      name: "TMDB_API_KEY",
+      title: "TMDB API 访问密钥",
+      type: "input"
+    },
+  ],
   modules: [
     {
       title: "实时榜单",
@@ -41,6 +48,86 @@ var WidgetMetadata = {
             { title: "芒果TV", value: "芒果TV" }
           ]
         }
+      ]
+    },
+    {
+        title: "悬疑剧场",
+        description: "获取悬疑剧场剧集信息",
+        requiresWebView: false,
+        functionName: "getSuspenseTheater",
+        cacheDuration: 86400,
+        params: [
+        {
+            name: "status",
+            title: "类别",
+            type: "enumeration",
+            description: "选择剧集上映时间",
+            enumOptions: [
+                { title: "正在热播", value: "now_playing" },
+                { title: "即将上线", value: "coming_soon" }
+            ]
+        },
+        {
+            name: "type",
+            title: "类型",
+            type: "enumeration",
+            description: "选择要查看的剧场类型",
+            enumOptions: [
+                { title: "全部剧场", value: "all" },
+                { title: "迷雾剧场", value: "迷雾剧场" },
+                { title: "白夜剧场", value: "白夜剧场" },
+                { title: "季风剧场", value: "季风剧场" },
+                { title: "X剧场", value: "X剧场" }
+            ]
+        },
+        {
+          name: "sort_by",
+          title: "排序",
+          type: "enumeration",
+          enumOptions: [
+            { title: "按时间", value: "time" },
+            { title: "按评分", value: "rating" }
+          ]
+        }
+      ]
+    },
+    {
+      title: "院线电影",
+      description: "获取正在上映或即将上映的电影列表",
+      requiresWebView: false,
+      functionName: "getMovies",
+      cacheDuration: 43200,
+      params: [
+        {
+          name: "sort",
+          title: "类型",
+          type: "enumeration",
+          enumOptions: [
+            { title: "正在上映", value: "nowplaying" },
+            { title: "即将上映", value: "coming" },
+            { title: "经典影片", value: "classics" }
+          ]
+        }
+      ]
+    },
+    {
+      title: "豆瓣片单",
+      description: "豆瓣片单地址",
+      requiresWebView: false,
+      functionName: "getDoulist",
+      params: [
+        {
+          name: "url",
+          title: "类型",
+          type: "input",
+          cacheDuration: 10800,
+          description: "豆瓣片单地址",
+          placeholders: [
+            { title: "高分韩剧", value: "2942804" },
+            { title: "惊悚恐怖片", value: "526461" },
+            { title: "一周电影口碑榜", value: "movie_weekly_best" }
+          ]
+        },
       ]
     },
     {
@@ -261,143 +348,122 @@ var WidgetMetadata = {
           type: "offset"
         }
       ]
-    },
-    {
-        title: "悬疑剧场",
-        description: "获取悬疑剧场剧集信息",
-        requiresWebView: false,
-        functionName: "getSuspenseTheater",
-        cacheDuration: 86400,
-        params: [
-        {
-            name: "type",
-            title: "类别",
-            type: "enumeration",
-            description: "选择剧集上映时间",
-            enumOptions: [
-                { title: "正在热播", value: "now_playing" },
-                { title: "即将上线", value: "coming_soon" }
-            ]
-        },
-        {
-            name: "sort_by",
-            title: "类型",
-            type: "enumeration",
-            description: "选择要查看的剧场类型",
-            enumOptions: [
-                { title: "全部剧场", value: "all" },
-                { title: "迷雾剧场", value: "迷雾剧场" },
-                { title: "白夜剧场", value: "白夜剧场" },
-                { title: "季风剧场", value: "季风剧场" },
-                { title: "X剧场", value: "X剧场" }
-            ]
-        }
-      ]
-    },
-    {
-      title: "院线电影",
-      description: "获取正在上映或即将上映的电影列表",
-      requiresWebView: false,
-      functionName: "getMovies",
-      cacheDuration: 43200,
-      params: [
-        {
-          name: "sort_by",
-          title: "类型",
-          type: "enumeration",
-          enumOptions: [
-            { title: "正在上映", value: "nowplaying" },
-            { title: "即将上映", value: "coming" },
-            { title: "经典影片", value: "classics" }
-          ]
-        }
-      ]
-    },
-    {
-      title: "本周榜单",
-      description: "获取豆瓣本周榜单",
-      requiresWebView: false,
-      functionName: "getDoubanWeekly",
-      cacheDuration: 10800,
-      params: [
-        {
-          name: "sort_by",
-          title: "榜单类型",
-          type: "enumeration",
-          enumOptions: [
-            { title: "一周口碑电影榜", value: "movie_weekly_best" },
-            { title: "华语口碑剧集榜", value: "tv_chinese_best_weekly" },
-            { title: "全球口碑剧集榜", value: "tv_global_best_weekly" },
-            { title: "国内口碑综艺榜", value: "show_chinese_best_weekly" },
-            { title: "国外口碑综艺榜", value: "show_global_best_weekly" }
-          ]
-        }
-      ]
-    },
-    {
-      title: "年度榜单",
-      description: "获取豆瓣年度榜单",
-      requiresWebView: false,
-      functionName: "getDouban2024",
-      cacheDuration: 86400,
-      params: [
-        {
-          name: "id",
-          title: "榜单",
-          type: "enumeration",
-          enumOptions: [
-            { title: "评分最高华语电影", value: "478" },
-            { title: "评分最高外语电影", value: "528" },
-            { title: "年度冷门佳片", value: "529" },
-            { title: "评分最高华语剧集", value: "545" },
-            { title: "评分最高英美新剧", value: "547" },
-            { title: "评分最高英美续订剧", value: "546" },
-            { title: "最值得期待华语电影", value: "559" },
-            { title: "最值得期待外语电影", value: "560" },
-            { title: "最值得期待剧集", value: "561" },
-            { title: "地区&类型电影", value: "563" },
-            { title: "上映周年电影", value: "565" }
-          ]
-        },
-        {
-          name: "sub_id",
-          title: "分类",
-          type: "enumeration",
-          belongTo: {
-            paramName: "id",
-            value: ["563"]
-          },
-          enumOptions: [
-            { title: "评分最高日本电影", value: "16065" },
-            { title: "评分最高韩国电影", value: "16066" },
-            { title: "评分最高喜剧片", value: "16067" },
-            { title: "评分最高爱情片", value: "16068" },
-            { title: "评分最高恐怖片", value: "16069" },
-            { title: "评分最高动画片", value: "16070" },
-            { title: "评分最高纪录片", value: "16071" }
-          ]
-        },
-        {
-          name: "sub_id",
-          title: "分类",
-          type: "enumeration",
-          description: "选择要查看的上映周年",
-          belongTo: {
-            paramName: "id",
-            value: ["565"]
-          },
-          enumOptions: [
-            { title: "上映10周年电影", value: "16080" },
-            { title: "上映20周年电影", value: "16081" },
-            { title: "上映30周年电影", value: "16082" },
-            { title: "上映40周年电影", value: "16083" },
-            { title: "上映50周年电影", value: "16084" }
-          ]
-        }
-      ]
     }
   ]
 };
+
+
+
+async function getDoulist(params = {}) {
+  try {
+    const url = params.url;
+    if (!url) {
+      console.error("缺少片单 URL");
+      throw new Error("缺少片单 URL");
+    }
+
+    // 首先尝试从 GitHub 数据源获取片单数据
+    const response = await Widget.http.get('https://raw.githubusercontent.com/2kuai/ForwardWidgets/main/data/doulist-data.json', {
+      headers: {
+        "User-Agent": USER_AGENT
+      }
+    });
+    
+    if (!response?.data) throw new Error("获取片单数据失败");
+    
+    // 检查是否存在对应 URL 的片单数据
+    if (response.data[url] && response.data[url].shows) {
+      const results = response.data[url].shows;
+      console.log(`从缓存数据源获取片单成功，共 ${results.length} 个项目`);
+      
+      if (!results.length) throw new Error("没有更多数据");
+      
+      return results;
+    }
+    
+    // 如果没有对应的缓存数据，则根据 URL 类型调用相应的加载方法
+    if (url.includes("douban.com/doulist/")) {
+      return await loadDefaultList(params);
+    } else if (url.includes("douban.com/subject_collection/")) {
+      return await loadSubjectCollection(params);
+    } else {
+      console.error("不支持的 URL 类型");
+      throw new Error("不支持的 URL 类型");
+    }
+    
+  } catch (error) {
+    console.error(`[片单列表] 获取失败: ${error.message}`);
+    throw error;
+  }
+}
+
+
+
+async function loadDefaultList(params = {}) {
+  const url = params.url;
+  // 提取片单 ID
+  const listId = url.match(/doulist\/(\d+)/)?.[1];
+  console.debug("片单 ID:", listId);
+  if (!listId) {
+    console.error("无法获取片单 ID");
+    throw new Error("无法获取片单 ID");
+  }
+
+  const start = params.start || 0;
+  const limit = params.limit || 20;
+  //        // 构建片单页面 URL
+  const pageUrl = `https://www.douban.com/doulist/${listId}/?start=${start}&limit=${limit}`;
+
+  console.log("请求片单页面:", pageUrl);
+  // 发送请求获取片单页面
+  const response = await Widget.http.get(pageUrl, {
+    headers: {
+      Referer: `https://movie.douban.com/explore`,
+      "User-Agent":
+        "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36",
+    },
+  });
+
+  if (!response || !response.data) {
+    throw new Error("获取片单数据失败");
+  }
+
+  console.log("片单页面数据长度:", response.data.length);
+  console.log("开始解析");
+
+  // 解析 HTML 得到文档 ID
+  const docId = Widget.dom.parse(response.data);
+  if (docId < 0) {
+    throw new Error("解析 HTML 失败");
+  }
+  console.log("解析成功:", docId);
+
+  //        // 获取所有视频项，得到元素ID数组
+  const videoElementIds = Widget.dom.select(docId, ".doulist-item .title a");
+
+  console.log("items:", videoElementIds);
+
+  let doubanIds = [];
+  for (const itemId of videoElementIds) {
+    const link = await Widget.dom.attr(itemId, "href");
+    const id = link.match(/subject\/(\d+)/)?.[1];
+    if (id) {
+      doubanIds.push({ id: id, type: "douban" });
+    }
+  }
+
+  return doubanIds;
+}
+
+
+
+
+
+
+
+
+
+
 
 // 实时榜单
 async function getTVRanking(params = {}) {
@@ -533,49 +599,66 @@ async function getDoubanRecs(params = {}, mediaType) {
 // 悬疑剧场
 async function getSuspenseTheater(params = {}) {
   try {
-    const tmdbIdBlocklist = [
-      "76582"
-    ]; // 在此数组中添加需要过滤的 TMDB ID
-
-    const response = await Widget.http.get('https://raw.githubusercontent.com/2kuai/ForwardWidgets/main/data/theater-data.json', {
-      headers: {
-        "User-Agent": USER_AGENT
+    const response = await Widget.http.get(
+      'https://raw.githubusercontent.com/2kuai/ForwardWidgets/main/data/theater-data.json',
+      {
+        headers: {
+          "User-Agent": USER_AGENT
+        }
       }
-    });
+    );
     
-    if (!response?.data) throw new Error("获取剧场数据失败");
+    if (!response?.data) {
+      throw new Error("获取剧场数据失败");
+    }
     
     const data = response.data;
-    const sortBy = params.sort_by || "all"; // 默认全部剧场
-    const type = params.type || "now_playing"; // 默认正在热播
+    const type = params.type || "all"; // 默认全部剧场
+    const status = params.status || "now_playing"; // 默认正在热播
+    const sortBy = params.sort_by || "time"; // 默认按时间排序
 
-    const sectionMap = {
+    // 状态映射
+    const statusMap = {
       "now_playing": "aired",
       "coming_soon": "upcoming"
     };
-    const section = sectionMap[type] || "aired";
+    const section = statusMap[status] || "aired";
 
+    // 获取基础数据
     let results = [];
-    if (sortBy === "all") {
-      for (const theaterName of ["迷雾剧场", "白夜剧场", "季风剧场", "X剧场"]) {
-        if (data[theaterName]?.[section]) {
-          results.push(...data[theaterName][section].map(item => ({
-            ...item
-          })));
-        }
-      }
-      results.sort((a, b) => new Date(b.releaseDate) - new Date(a.releaseDate));
+    if (type === "all") {
+      const theaters = ["迷雾剧场", "白夜剧场", "季风剧场", "X剧场"];
+      results = theaters.flatMap(theaterName => 
+        data[theaterName]?.[section] || []
+      );
     } else {
-      if (!data[sortBy]) throw new Error(`未找到 ${sortBy} 数据`);
-      if (!data[sortBy][section]) throw new Error(`${sortBy} 中没有 ${type} 数据`);
+      if (!data[type]) {
+        throw new Error(`未找到 ${type} 剧场数据`);
+      }
       
-      results = data[sortBy][section];
+      if (!data[type][section]) {
+        throw new Error(`${type} 剧场中没有 ${status} 数据`);
+      }
+      
+      results = data[type][section];
     }
 
-    return results.filter(item => 
-      !(tmdbIdBlocklist.includes(String(item.id)) || item.posterPath == null)
-    );
+    // 过滤无效数据
+    const filteredResults = results.filter(item => item.posterPath != null);
 
+    // 排序处理
+    switch (sortBy) {
+      case "time":
+        return filteredResults.sort((a, b) => 
+          new Date(b.releaseDate) - new Date(a.releaseDate)
+        );
+      case "rating":
+        return filteredResults.sort((a, b) => 
+          (b.rating || 0) - (a.rating || 0)
+        );
+      default:
+        return filteredResults;
+    }
     
   } catch (error) {
     console.error(`获取剧场数据失败: ${error.message}`);
@@ -587,7 +670,7 @@ async function getSuspenseTheater(params = {}) {
 // 院线电影
 async function getMovies(params = {}) {
   try {
-    const type = params.sort_by;
+    const type = params.sort;
 
     const response = await Widget.http.get('https://raw.githubusercontent.com/2kuai/ForwardWidgets/main/data/movies-data.json', {
       headers: {
@@ -604,87 +687,6 @@ async function getMovies(params = {}) {
     return results.filter(item => item.posterPath != null);
   } catch (error) {
     console.error(`[电影列表] 获取失败: ${error.message}`);
-    throw error;
-  }
-}
-
-// 本周榜单
-async function getDoubanWeekly(params = {}) {
-  try {
-    const url = `https://m.douban.com/rexxar/api/v2/subject_collection/${params.sort_by}/items?updated_at&items_only=1&type_tag&for_mobile=1`;
-    const response = await Widget.http.get(url, {
-      headers: {
-        "User-Agent": USER_AGENT,
-        "referer": `https://m.douban.com/subject_collection/${params.type}/`
-      }
-    });
-    
-    if (!response.data?.subject_collection_items?.length) throw new Error("无返回数据");
-    
-    return response.data.subject_collection_items.map(item => ({
-      id: item.id,
-      type: "douban",
-      title: item.title,
-      posterPath: item.poster_path || "",
-      backdropPath: item.cover_url,
-      description: item.description|| "暂无描述",
-      mediaType: item.type,
-      link: `https://movie.douban.com/subject/${item.id}/`
-    }));
-  } catch (error) {
-    console.error(`获取榜单数据失败: ${error.message}`);
-    throw error;
-  }
-}
-
-// 年度榜单
-async function getDouban2024(options = {}) {
-  try {
-    
-    const response = await Widget.http.get("https://movie.douban.com/j/neu/page/27/", {
-      headers: {
-        "User-Agent": USER_AGENT,
-        "Referer": "https://movie.douban.com/annual/2024/?fullscreen=1&dt_from=movie_navigation"
-      }
-    });
-
-    const matched = response.data.widgets?.find(widget => 
-      String(widget.id) === String(options.id)
-    );
-    
-    if (!matched?.source_data) throw new Error("未找到对应的榜单数据");
-
-    const sourceData = matched.source_data;
-
-    if (Array.isArray(sourceData) && options.sub_id) {
-      const matchedGroup = sourceData.find(group => 
-        String(group.subject_collection?.id) === String(options.sub_id)
-      );
-
-      if (!matchedGroup?.subject_collection_items?.length) {
-        throw new Error("未找到匹配的子榜单数据");
-      }
-
-      return matchedGroup.subject_collection_items.map(item => ({
-        id: item.id,
-        type: "douban",
-        title: item.title
-      }));
-    }
-
-    if (!sourceData.subject_collection_items?.length) throw new Error("榜单数据为空");
-
-    console.log('[电影年度数据] 成功获取数据');
-    return sourceData.subject_collection_items.map(item => ({
-      id: item.id,
-      type: "douban",
-      title: item.title,
-      coverUrl: item.cover_url,
-      rating: item.rating.value
-    }));
-
-  } catch (error) {
-    console.error(`获取电影年度数据失败: ${error.message}`);
     throw error;
   }
 }
