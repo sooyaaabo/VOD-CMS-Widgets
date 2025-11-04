@@ -7,7 +7,7 @@ var WidgetMetadata = {
   description: "获取最新热门影片推荐",
   author: "两块",
   site: "https://github.com/2kuai/ForwardWidgets",
-  version: "1.1.9",
+  version: "1.2.0",
   requiredVersion: "0.0.1",
   globalParams: [
     {
@@ -103,9 +103,19 @@ var WidgetMetadata = {
           title: "类型",
           type: "enumeration",
           enumOptions: [
-            { title: "正在上映", value: "nowplaying" },
+            { title: "正在热映", value: "nowplaying" },
             { title: "即将上映", value: "coming" },
-            { title: "经典影片", value: "classics" }
+            { title: "经典影片", value: "classics" },
+            { title: "年度电影", value: "yearly2025" }  
+          ]
+        },
+        {
+          name: "sort_by",
+          title: "排序",
+          type: "enumeration",
+          enumOptions: [
+            { title: "按时间", value: "time" },
+            { title: "按评分", value: "rating" }
           ]
         }
       ]
@@ -137,15 +147,6 @@ var WidgetMetadata = {
       functionName: "getPreferenceRecommendations",
       cacheDuration: 10800,
       params: [
-        {
-          name: "source",
-          title: "来源",
-          type: "enumeration",
-          enumOptions: [
-            { title: "豆瓣", value: "douban" },
-            { title: "TMDB", value: "tmdb" }
-          ]
-        },
         {
           name: "mediaType",
           title: "类别",
@@ -260,15 +261,6 @@ var WidgetMetadata = {
       cacheDuration: 3600,
       params: [
         {
-          name: "source",
-          title: "来源",
-          type: "enumeration",
-          enumOptions: [
-            { title: "豆瓣", value: "douban" },
-            { title: "TMDB", value: "tmdb" }
-          ]
-        },
-        {
           name: "category",
           title: "类别",
           type: "enumeration",
@@ -311,15 +303,6 @@ var WidgetMetadata = {
       functionName: "getHotTv",
       cacheDuration: 3600,
       params: [
-        {
-          name: "source",
-          title: "来源",
-          type: "enumeration",
-          enumOptions: [
-            { title: "豆瓣", value: "douban" },
-            { title: "TMDB", value: "tmdb" }
-          ]
-        },
         {
           name: "sort_by",
           title: "类型",
@@ -456,15 +439,6 @@ async function loadDefaultList(params = {}) {
 }
 
 
-
-
-
-
-
-
-
-
-
 // 实时榜单
 async function getTVRanking(params = {}) {
     try {       
@@ -528,18 +502,9 @@ async function getPreferenceRecommendations(params = {}) {
 
         if (!validItems.length) throw new Error("未找到有效的影视作品");
         
-        if (params.source === "douban") {
-            return validItems.map(item => ({
-                id: item.id,
-                type: "douban",
-                title: item.title,
-                mediaType: params.mediaType
-            }));
-        } else {
             return await Promise.all(validItems.map(async item => {
-                return await getTmdbDetail(item.title, params.mediaType);
+                return await getTmdbDetail(item.title, params.mediaType, params.TMDB_API_KEY);
             }));
-        }
 
     } catch (error) {
         throw error;
@@ -563,36 +528,40 @@ async function getDoubanRecs(params = {}, mediaType) {
         const rating = params.rating || "0";
         if (!/^\d$/.test(String(rating))) throw new Error("评分必须为 0～9 的整数");
         
-        const limit = 30;
-        const offset = Number(params.offset);     
+        const limit = 20;
+        const offset = Number(params.offset) || 0;  // 添加默认值
         const category = params.category != null ? params.category : "tv";        
-        const url = `https://m.douban.com/rexxar/api/v2/subject/recent_hot/${mediaType}?start=${offset}&limit=${offset + limit}&category=${category}&type=${params.sort_by}&score_range=${rating},10`;
+        const url = `https://m.douban.com/rexxar/api/v2/subject/recent_hot/${mediaType}?start=${offset}&limit=${limit}&category=${category}&type=${params.sort_by}&score_range=${rating},10`;
+        
         const response = await Widget.http.get(url, {
             headers: {
                 "User-Agent": USER_AGENT,
-                "Referer": "https://movie.douban.com/explore"
+                "Referer": "https://movie.douban.com/"  // 修正Referer
             }
         });
 
-        if (!response.data?.items?.length) throw new Error("数据格式不符合预期");
-
-        if (params.source === "douban") {
-            return response.data.items.map(item => ({
-                id: item.id,
-                type: "douban",
-                title: item.title,
-                mediaType: mediaType
-            }));
-        } else {
-            const tmdbDetails = await Promise.all(response.data.items.map(async item => {
-                return await getTmdbDetail(item.title, mediaType);
-            }));
-            // Filter out null values when source is tmdb
-            return tmdbDetails.filter(detail => detail !== null);
+        if (!response.data?.items?.length) {
+            return [];  // 返回空数组而不是抛出错误
         }
 
+        // 添加错误处理，避免单个请求失败影响全部
+        const tmdbDetails = await Promise.all(
+            response.data.items.map(async item => {
+                try {
+                    return await getTmdbDetail(item.title, mediaType, params.TMDB_API_KEY);
+                } catch (error) {
+                    console.warn(`获取TMDB详情失败: ${item.title}`, error);
+                    return null;
+                }
+            })
+        );
+        
+        // 过滤掉null值
+        return tmdbDetails.filter(detail => detail !== null);
+
     } catch (error) {
-        throw error;
+        console.error("获取豆瓣推荐失败:", error);
+        return [];  // 返回空数组而不是抛出错误
     }
 }
 
@@ -671,6 +640,7 @@ async function getSuspenseTheater(params = {}) {
 async function getMovies(params = {}) {
   try {
     const type = params.sort;
+    const sortBy = params.sort_by; // 获取排序方式
 
     const response = await Widget.http.get('https://raw.githubusercontent.com/2kuai/ForwardWidgets/main/data/movies-data.json', {
       headers: {
@@ -680,24 +650,38 @@ async function getMovies(params = {}) {
     
     if (!response?.data) throw new Error("获取院线数据失败");
     
-    const results = response.data[type];
+    let results = response.data[type];
     
-    if (!results.length) throw new Error("没有更多数据");
+    if (!results?.length) throw new Error("没有更多数据");
     
-    return results.filter(item => item.posterPath != null);
+    // 过滤掉没有海报的数据
+    results = results.filter(item => item.posterPath != null);
+    
+    // 根据 sort_by 参数排序
+    if (sortBy === 'time') {
+      results.sort((a, b) => new Date(b.releaseDate) - new Date(a.releaseDate));
+    } else if (sortBy === 'rating') {
+      results.sort((a, b) => (b.rating || 0) - (a.rating || 0));
+    }
+    
+    return results;
   } catch (error) {
     console.error(`[电影列表] 获取失败: ${error.message}`);
     throw error;
   }
 }
 
+
 // 通用剧名查询，例如：await getTmdbDetail("阿凡达（2019）", "movie")
-const getTmdbDetail = async (title, mediaType) => {
+const getTmdbDetail = async (title, mediaType, key, options = {}) => {
   if (!title?.trim() || !['tv', 'movie'].includes(mediaType)) {
     console.error(`[TMDB] 参数错误: mediaType 必须为 'tv' 或 'movie'`);
     return null;
   }
 
+  const { language = "zh-CN" } = options;
+  const apiKey = key; // 从 params.TMDB_API_KEY 获取 API Key
+  
   const yearMatch = title.match(/\b(19|20)\d{2}\b/)?.[0];
 
   const cleanTitle = title
@@ -706,34 +690,75 @@ const getTmdbDetail = async (title, mediaType) => {
     .replace(/第[0-9一二三四五六七八九十]+季/g, '') // 移除季信息
     .trim();
 
-  try {        
-    const params = {
-      query: cleanTitle,
-      language: "zh_CN"
-    };
+  try {
+    let response;
+    
+    // 如果存在 API Key，使用 API 查询
+    if (apiKey) {
+      const searchUrl = `https://api.themoviedb.org/3/search/${mediaType}`;
+      const params = {
+        query: cleanTitle,
+        language: language,
+        include_adult: false
+      };
 
-    if (yearMatch) {
-      params.year = yearMatch;
+      if (yearMatch) {
+        params.year = yearMatch;
+      }
+
+      // 将 API Key 放在 Header 中
+      const headers = {
+        "Authorization": `Bearer ${apiKey}`,
+        "Content-Type": "application/json;charset=utf-8"
+      };
+
+      // 如果存在 USER_AGENT，也添加到 Header
+      if (typeof USER_AGENT !== 'undefined') {
+        headers["User-Agent"] = USER_AGENT;
+      }
+
+      response = await Widget.http.get(searchUrl, { 
+        params: params,
+        headers: headers
+      });
+      
+      // 检查 API 响应状态
+      if (response?.status === 401) {
+        throw new Error("TMDB API Key 无效");
+      }
+      
+      console.log(`[TMDB] 使用 API Key 查询: ${cleanTitle}`);
+    } else {
+      // 没有 API Key，使用内置查询
+      const params = {
+        query: cleanTitle,
+        language: language
+      };
+
+      if (yearMatch) {
+        params.year = yearMatch;
+      }
+
+      response = await Widget.tmdb.get(`/search/${mediaType}`, {params});
+      console.log(`[TMDB] 使用内置查询: ${cleanTitle}`);
     }
 
-    const response = await Widget.tmdb.get(`/search/${mediaType}`, {params});
-
-    if (!response?.results?.length) {
+    if (!response?.data?.results?.length) {
       console.log(`[TMDB] 无返回数据`);
       return null;
     }
 
-    const exactMatch = response.results.find(
+    const results = response.data.results;
+
+    // 精确匹配逻辑
+    const exactMatch = results.find(
       item => 
         (item.name === cleanTitle || item.title === cleanTitle) ||
         (item.original_name === cleanTitle || item.original_title === cleanTitle)
     );
 
-    if (exactMatch) {
-      return formatTmdbResult(exactMatch, mediaType);
-    }
-
-    return formatTmdbResult(response.results[0], mediaType);
+    const matchedItem = exactMatch || results[0];
+    return formatTmdbResult(matchedItem, mediaType);
   } catch (error) {
     console.error(`[TMDB] 请求失败: ${error.message}`);
     return null;
@@ -752,3 +777,8 @@ const formatTmdbResult = (item, mediaType) => ({
   rating: item.vote_average,
   mediaType: mediaType
 });
+
+// 使用示例：
+// 1. 如果 params.TMDB_API_KEY 存在，则使用 API 查询
+// 2. 如果 params.TMDB_API_KEY 不存在，则使用内置查询
+// await getTmdbDetail("阿凡达（2019）", "movie");
