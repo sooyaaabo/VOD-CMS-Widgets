@@ -7,12 +7,12 @@ var WidgetMetadata = {
   description: "获取最新热门影片推荐",
   author: "两块",
   site: "https://github.com/2kuai/ForwardWidgets",
-  version: "1.2.0",
+  version: "1.2.1",
   requiredVersion: "0.0.1",
   globalParams: [
     {
       name: "TMDB_API_KEY",
-      title: "TMDB API 访问密钥",
+      title: "TMDB API 访问令牌",
       type: "input"
     },
   ],
@@ -121,139 +121,6 @@ var WidgetMetadata = {
       ]
     },
     {
-      title: "豆瓣片单",
-      description: "豆瓣片单地址",
-      requiresWebView: false,
-      functionName: "getDoulist",
-      params: [
-        {
-          name: "url",
-          title: "类型",
-          type: "input",
-          cacheDuration: 10800,
-          description: "豆瓣片单地址",
-          placeholders: [
-            { title: "高分韩剧", value: "2942804" },
-            { title: "惊悚恐怖片", value: "526461" },
-            { title: "一周电影口碑榜", value: "movie_weekly_best" }
-          ]
-        },
-      ]
-    },
-    {
-      title: "观影偏好",
-      description: "根据个人偏好推荐影视作品",
-      requiresWebView: false,
-      functionName: "getPreferenceRecommendations",
-      cacheDuration: 10800,
-      params: [
-        {
-          name: "mediaType",
-          title: "类别",
-          type: "enumeration",
-          enumOptions: [
-            { title: "剧集", value: "tv" },
-            { title: "电影", value: "movie" }
-          ]
-        },
-        {
-          name: "genre",
-          title: "类型",
-          type: "enumeration",
-          enumOptions: [
-            { title: "全部", value: "" },
-            { title: "喜剧", value: "喜剧" },
-            { title: "爱情", value: "爱情" },
-            { title: "动作", value: "动作" },
-            { title: "科幻", value: "科幻" },
-            { title: "动画", value: "动画" },
-            { title: "悬疑", value: "悬疑" },
-            { title: "犯罪", value: "犯罪" },
-            { title: "音乐", value: "音乐" },
-            { title: "历史", value: "历史" },
-            { title: "奇幻", value: "奇幻" },
-            { title: "恐怖", value: "恐怖" },
-            { title: "战争", value: "战争" },
-            { title: "西部", value: "西部" },
-            { title: "歌舞", value: "歌舞" },
-            { title: "传记", value: "传记" },
-            { title: "武侠", value: "武侠" },
-            { title: "纪录片", value: "纪录片" },
-            { title: "短片", value: "短片" },
-            
-          ]
-        },
-        {
-          name: "region",
-          title: "地区",
-          type: "enumeration",
-          enumOptions: [
-            { title: "全部地区", value: "" },
-            { title: "华语", value: "华语" },
-            { title: "欧美", value: "欧美" },
-            { title: "韩国", value: "韩国" },
-            { title: "日本", value: "日本" },
-            { title: "中国大陆", value: "中国大陆" },
-            { title: "中国香港", value: "中国香港" },
-            { title: "中国台湾", value: "中国台湾" },
-            { title: "美国", value: "美国" },
-            { title: "英国", value: "英国" },
-            { title: "法国", value: "法国" },
-            { title: "德国", value: "德国" },
-            { title: "意大利", value: "意大利" },
-            { title: "西班牙", value: "西班牙" },
-            { title: "印度", value: "印度" },
-            { title: "泰国", value: "泰国" }
-          ]
-        },
-        {
-          name: "year",
-          title: "年份",
-          type: "enumeration",
-          enumOptions: [
-            { title: "全部年份", value: "" },
-            { title: "2025", value: "2025" },
-            { title: "2024", value: "2024" },
-            { title: "2023", value: "2023" },
-            { title: "2022", value: "2022" },
-            { title: "2021", value: "2021" },
-            { title: "2020年代", value: "2020年代" },
-            { title: "2010年代", value: "2010年代" },
-            { title: "2000年代", value: "2000年代" }
-
-          ]
-        },
-        {
-          name: "sort_by",
-          title: "排序",
-          type: "enumeration",
-          enumOptions: [
-            { title: "综合排序", value: "T" },
-            { title: "近期热度", value: "U" },
-            { title: "首映时间", value: "R" },
-            { title: "高分优选", value: "S" }
-          ]
-        },
-        {
-          name: "tags",
-          title: "标签",
-          type: "input",
-          description: "设置自定义标签，例如：丧尸"  
-        },
-        {
-          name: "rating",
-          title: "评分",
-          type: "input",
-          description: "设置最低评分过滤，例如：6"  
-        },
-        {
-          name: "offset",
-          title: "起始位置",
-          type: "offset"
-        }
-      ]
-    },
-    {
       title: "电影推荐",  
       description: "最近热门电影推荐",
       requiresWebView: false,
@@ -335,110 +202,6 @@ var WidgetMetadata = {
   ]
 };
 
-
-
-async function getDoulist(params = {}) {
-  try {
-    const url = params.url;
-    if (!url) {
-      console.error("缺少片单 URL");
-      throw new Error("缺少片单 URL");
-    }
-
-    // 首先尝试从 GitHub 数据源获取片单数据
-    const response = await Widget.http.get('https://raw.githubusercontent.com/2kuai/ForwardWidgets/main/data/doulist-data.json', {
-      headers: {
-        "User-Agent": USER_AGENT
-      }
-    });
-    
-    if (!response?.data) throw new Error("获取片单数据失败");
-    
-    // 检查是否存在对应 URL 的片单数据
-    if (response.data[url] && response.data[url].shows) {
-      const results = response.data[url].shows;
-      console.log(`从缓存数据源获取片单成功，共 ${results.length} 个项目`);
-      
-      if (!results.length) throw new Error("没有更多数据");
-      
-      return results;
-    }
-    
-    // 如果没有对应的缓存数据，则根据 URL 类型调用相应的加载方法
-    if (url.includes("douban.com/doulist/")) {
-      return await loadDefaultList(params);
-    } else if (url.includes("douban.com/subject_collection/")) {
-      return await loadSubjectCollection(params);
-    } else {
-      console.error("不支持的 URL 类型");
-      throw new Error("不支持的 URL 类型");
-    }
-    
-  } catch (error) {
-    console.error(`[片单列表] 获取失败: ${error.message}`);
-    throw error;
-  }
-}
-
-
-
-async function loadDefaultList(params = {}) {
-  const url = params.url;
-  // 提取片单 ID
-  const listId = url.match(/doulist\/(\d+)/)?.[1];
-  console.debug("片单 ID:", listId);
-  if (!listId) {
-    console.error("无法获取片单 ID");
-    throw new Error("无法获取片单 ID");
-  }
-
-  const start = params.start || 0;
-  const limit = params.limit || 20;
-  //        // 构建片单页面 URL
-  const pageUrl = `https://www.douban.com/doulist/${listId}/?start=${start}&limit=${limit}`;
-
-  console.log("请求片单页面:", pageUrl);
-  // 发送请求获取片单页面
-  const response = await Widget.http.get(pageUrl, {
-    headers: {
-      Referer: `https://movie.douban.com/explore`,
-      "User-Agent":
-        "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36",
-    },
-  });
-
-  if (!response || !response.data) {
-    throw new Error("获取片单数据失败");
-  }
-
-  console.log("片单页面数据长度:", response.data.length);
-  console.log("开始解析");
-
-  // 解析 HTML 得到文档 ID
-  const docId = Widget.dom.parse(response.data);
-  if (docId < 0) {
-    throw new Error("解析 HTML 失败");
-  }
-  console.log("解析成功:", docId);
-
-  //        // 获取所有视频项，得到元素ID数组
-  const videoElementIds = Widget.dom.select(docId, ".doulist-item .title a");
-
-  console.log("items:", videoElementIds);
-
-  let doubanIds = [];
-  for (const itemId of videoElementIds) {
-    const link = await Widget.dom.attr(itemId, "href");
-    const id = link.match(/subject\/(\d+)/)?.[1];
-    if (id) {
-      doubanIds.push({ id: id, type: "douban" });
-    }
-  }
-
-  return doubanIds;
-}
-
-
 // 实时榜单
 async function getTVRanking(params = {}) {
     try {       
@@ -458,59 +221,6 @@ async function getTVRanking(params = {}) {
         throw new Error(`获取榜单失败: ${error.message}`);
     }
 }
-
-// 观影偏好
-async function getPreferenceRecommendations(params = {}) {
-    try {
-        const rating = params.rating || "0";
-        if (!/^\d$/.test(String(rating))) throw new Error("评分必须为 0～9 的整数");
-
-        const selectedCategories = {
-            "类型": params.genre || "",
-            "地区": params.region || ""
-        };
-
-        const tags_sub = [];
-        if (params.genre) tags_sub.push(params.genre);
-        if (params.region) tags_sub.push(params.region);
-        if (params.year) {
-            if (params.year.includes("年代")) {
-                tags_sub.push(params.year);
-            } else {
-                tags_sub.push(`${params.year}年`);
-            }
-        }
-        if (params.tags) {
-            const customTagsArray = params.tags.split(',').filter(tag => tag.trim() !== '');
-            tags_sub.push(...customTagsArray);
-        }
-
-        const limit = 20;
-        const offset = Number(params.offset);
-        const url = `https://m.douban.com/rexxar/api/v2/${params.mediaType}/recommend?refresh=0&start=${offset}&count=${Number(offset) + limit}&selected_categories=${encodeURIComponent(JSON.stringify(selectedCategories))}&uncollect=false&score_range=${rating},10&tags=${encodeURIComponent(tags_sub.join(","))}&sort=${params.sort_by}`;
-
-        const response = await Widget.http.get(url, {
-            headers: {
-                "User-Agent": USER_AGENT,
-                "Referer": "https://movie.douban.com/explore"
-            }
-        });
-
-        if (!response.data?.items?.length) throw new Error("未找到匹配的影视作品");
-
-        const validItems = response.data.items.filter(item => item.card === "subject");
-
-        if (!validItems.length) throw new Error("未找到有效的影视作品");
-        
-            return await Promise.all(validItems.map(async item => {
-                return await getTmdbDetail(item.title, params.mediaType, params.TMDB_API_KEY);
-            }));
-
-    } catch (error) {
-        throw error;
-    }
-}
-
 
 // 电影推荐
 async function getHotMovies(params = {}) {
@@ -692,6 +402,7 @@ const getTmdbDetail = async (title, mediaType, key, options = {}) => {
 
   try {
     let response;
+    let responseData; // 统一存储响应数据
     
     // 如果存在 API Key，使用 API 查询
     if (apiKey) {
@@ -712,21 +423,13 @@ const getTmdbDetail = async (title, mediaType, key, options = {}) => {
         "Content-Type": "application/json;charset=utf-8"
       };
 
-      // 如果存在 USER_AGENT，也添加到 Header
-      if (typeof USER_AGENT !== 'undefined') {
-        headers["User-Agent"] = USER_AGENT;
-      }
-
       response = await Widget.http.get(searchUrl, { 
         params: params,
         headers: headers
       });
       
-      // 检查 API 响应状态
-      if (response?.status === 401) {
-        throw new Error("TMDB API Key 无效");
-      }
-      
+      // API Key 查询返回的是 response.data
+      responseData = response.data;
       console.log(`[TMDB] 使用 API Key 查询: ${cleanTitle}`);
     } else {
       // 没有 API Key，使用内置查询
@@ -740,15 +443,18 @@ const getTmdbDetail = async (title, mediaType, key, options = {}) => {
       }
 
       response = await Widget.tmdb.get(`/search/${mediaType}`, {params});
+      // 系统内置查询返回的是 response 本身
+      responseData = response;
       console.log(`[TMDB] 使用内置查询: ${cleanTitle}`);
     }
 
-    if (!response?.data?.results?.length) {
+    // 统一使用 responseData 来处理结果
+    if (!responseData?.results?.length) {
       console.log(`[TMDB] 无返回数据`);
       return null;
     }
 
-    const results = response.data.results;
+    const results = responseData.results;
 
     // 精确匹配逻辑
     const exactMatch = results.find(
@@ -765,6 +471,7 @@ const getTmdbDetail = async (title, mediaType, key, options = {}) => {
   }
 };
 
+
 // 辅助函数：格式化 TMDB 返回的结果
 const formatTmdbResult = (item, mediaType) => ({
   id: item.id,
@@ -777,8 +484,3 @@ const formatTmdbResult = (item, mediaType) => ({
   rating: item.vote_average,
   mediaType: mediaType
 });
-
-// 使用示例：
-// 1. 如果 params.TMDB_API_KEY 存在，则使用 API 查询
-// 2. 如果 params.TMDB_API_KEY 不存在，则使用内置查询
-// await getTmdbDetail("阿凡达（2019）", "movie");
