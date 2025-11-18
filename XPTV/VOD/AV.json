@@ -25,6 +25,12 @@
             "ext": "https://raw.githubusercontent.com/fangkuia/XPTV/main/js/EXPORNTOONS.js"
         },
         {
+            "name": "AV-FMovies",
+            "type": 3,
+            "api": "csp_fmovies",
+            "ext": "https://raw.githubusercontent.com/Yswag/xptv-extensions/main/js/fmovies.js"
+        },
+        {
             "name": "AV-Hanime1",
             "type": 3,
             "api": "csp_Hanime1",
