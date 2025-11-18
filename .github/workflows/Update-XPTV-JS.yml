@@ -6,7 +6,10 @@ on:
   workflow_dispatch:
   schedule:
     - cron: "0 */2 * * *"
-
+  push:
+    paths:
+      - ".github/workflows/Update-XPTV-JS.yml"
+      
 permissions:
   actions: write
   contents: write
