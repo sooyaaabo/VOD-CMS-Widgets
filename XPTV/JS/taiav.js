@@ -5,6 +5,7 @@ let appConfig = {
     ver: 1,
     title: 'Taiav',
     site: 'https://taiav.com',
+    cdn: 'https://v15cdn.snmovie.com',
     tabs: [
         {
             name: '网红主播',
@@ -89,8 +90,8 @@ async function getCards(ext) {
             ext: {
                 url: `${appConfig.site}/api/getmovie?type=1280&id=${e._id}`, // 拼接URL
             },
-          })
         })
+    })
     return jsonify({
         list: cards,
     })
@@ -106,15 +107,15 @@ async function getTracks(ext) {
         },
     })
     let playlist = argsify(data)
-        const name = '播放'
-        const m3u8 = playlist.m3u8.replace(/\?.*$/, '')
-        tracks.push({
-            name: name,
-            pan: '',
-            ext: {
-                playurl: `${appConfig.site}${m3u8}`,
-            },
-        })
+    const name = '播放'
+    const m3u8 = playlist.m3u8
+    tracks.push({
+        name: name,
+        pan: '',
+        ext: {
+            playurl: `${appConfig.site}${m3u8}`,
+        },
+    })
     return jsonify({
         list: [
             {
@@ -132,7 +133,7 @@ async function getPlayinfo(ext) {
         urls: [playurl],
         headers: [{
             'User-Agent': UA,
-            'Referer': 'https://taiav.com/'
+            'origin': appConfig.site
         }]
     })
 }
@@ -160,7 +161,7 @@ async function search(ext) {
             vod_pubdate: addtime,
             vod_duration: time,
             ext: {
-                url: `${appConfig.site}/api/getmovie?type=1280&id=${e._id}`, 
+                url: `${appConfig.site}/api/getmovie?type=1280&id=${e._id}`,
             },
         })
     })
