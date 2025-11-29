@@ -13,12 +13,6 @@
             "ext": "https://gist.githubusercontent.com/occupy-pluto/e3a7bb98d5027d0f6dfa85fc2ac11a78/raw/6deb0475d295ac867ccb9c7cf3b1fb212a77abd7/agedm.js"
         },
         {
-            "name": "TV-AnFuns",
-            "type": 3,
-            "api": "csp_anfuns",
-            "ext": "https://raw.githubusercontent.com/Yswag/xptv-extensions/main/js/anfuns.js"
-        },
-        {
             "name": "TV-Catflix",
             "type": 3,
             "api": "csp_catflix",
@@ -109,12 +103,6 @@
             "ext": "https://raw.githubusercontent.com/Yswag/xptv-extensions/main/js/laodifang.js"
         },
         {
-            "name": "TV-零度影视",
-            "type": 3,
-            "api": "csp_zero",
-            "ext": "https://raw.githubusercontent.com/Yswag/xptv-extensions/main/js/zero.js"
-        },
-        {
             "name": "TV-欧乐影院",
             "type": 3,
             "api": "csp_Olevod",
@@ -161,12 +149,6 @@
             "type": 3,
             "api": "csp_Zxzj",
             "ext": "https://raw.githubusercontent.com/fangkuia/XPTV/main/js/zxzj.js"
-        },
-        {
-            "name": "TV-追光影视",
-            "type": 3,
-            "api": "csp_sgsd",
-            "ext": "https://raw.githubusercontent.com/fangkuia/XPTV/main/js/sgsd.js"
         },
         {
             "name": "TV-ギリギリ动漫",
