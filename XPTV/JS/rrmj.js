@@ -1,7 +1,8 @@
 // 引用链接: https://raw.githubusercontent.com/Yswag/xptv-extensions/main/js/rrmj.js
 const CryptoJS = createCryptoJS()
 
-const deviceId = generateUUID().toUpperCase()
+// const deviceId = generateUUID().toUpperCase()
+const deviceId = argsify($config_str).umid ? argsify($config_str).umid : '4E292B5D-FE99-4860-8054-5B0A11CC27AF'
 
 let appConfig = {
     ver: 20251202,
@@ -117,6 +118,7 @@ async function getCards(ext) {
             url,
             deviceId,
         })
+        headers['Content-Type'] = 'application/json'
 
         const { data } = await $fetch.post(url, body, {
             headers,
@@ -168,6 +170,7 @@ async function getTracks(ext) {
         headers,
     })
     const decryptedData = decrypt(data)
+    const quality = argsify(decryptedData).data.watchInfo.sortedItems[0].qualityCode
 
     argsify(decryptedData).data.episodeList.forEach((e) => {
         tracks.push({
@@ -176,6 +179,7 @@ async function getTracks(ext) {
             ext: {
                 dramaId: id,
                 episodeSid: e.sid,
+                quality,
             },
         })
     })
@@ -192,25 +196,29 @@ async function getTracks(ext) {
 
 async function getPlayinfo(ext) {
     ext = argsify(ext)
-    let { dramaId, episodeSid } = ext
+    let { dramaId, episodeSid, quality } = ext
     let url = appConfig.site + `/m-station/drama/play`
     try {
         let params = {
             hsdrOpen: 0,
             dramaId: dramaId,
             episodeSid: episodeSid,
-            quality: 'AI4K',
+            quality: quality,
             hevcOpen: 1,
             tria4k: 1,
             // isAgeLimit: 0,
         }
+
         let headers = buildSignedHeaders({
             method: 'GET',
             url,
             params,
             deviceId,
-            token: 'rrtv-054123911b8d3460b972962de0c57f5552bacb5e',
+            token: argsify($config_str).token
+                ? argsify($config_str).token
+                : 'rrtv-bb3643e9bc9d62ebea4c30b20e7c313d5f57ab8a',
         })
+        // headers['umid'] = argsify($config_str).umid ? argsify($config_str).umid : '4E292B5D-FE99-4860-8054-5B0A11CC27AF'
 
         const { data } = await $fetch.get(`${url}?${sortedQueryString(params)}`, {
             headers,
@@ -238,7 +246,7 @@ async function getPlayinfo(ext) {
 
         return jsonify({ urls: [playUrl] })
     } catch (error) {
-        console.log(error)
+        $print(error)
     }
 }
 
