@@ -77,7 +77,6 @@ jobs:
           [jpyy]="https://raw.githubusercontent.com/Yswag/xptv-extensions/main/js/jpyy.js"
           [jdys]="https://raw.githubusercontent.com/Yswag/xptv-extensions/main/js/jdys.js"
           [jcy]="https://raw.githubusercontent.com/Yswag/xptv-extensions/main/js/jcy.js"
-          [laodifang]="https://raw.githubusercontent.com/Yswag/xptv-extensions/main/js/laodifang.js"
           [zero]="https://raw.githubusercontent.com/Yswag/xptv-extensions/main/js/zero.js"
           [ole]="https://raw.githubusercontent.com/fangkuia/XPTV/main/js/ole.js"
           [ppxys]="https://raw.githubusercontent.com/Yswag/xptv-extensions/main/js/ppxys.js"
