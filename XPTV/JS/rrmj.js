@@ -1,8 +1,10 @@
 // 引用链接: https://raw.githubusercontent.com/Yswag/xptv-extensions/main/js/rrmj.js
 const CryptoJS = createCryptoJS()
+const cheerio = createCheerio()
 
-// const deviceId = generateUUID().toUpperCase()
-const deviceId = argsify($config_str).umid ? argsify($config_str).umid : '4E292B5D-FE99-4860-8054-5B0A11CC27AF'
+// 會員數據來源: baby
+let deviceId = '4E292B5D-FE99-4860-8054-5B0A11CC27AF'
+let vipToken = 'rrtv-bb3643e9bc9d62ebea4c30b20e7c313d5f57ab8a'
 
 let appConfig = {
     ver: 20251202,
@@ -93,6 +95,7 @@ let appConfig = {
 }
 
 async function getConfig() {
+    await getLatestToken()
     return jsonify(appConfig)
 }
 
@@ -131,7 +134,8 @@ async function getCards(ext) {
                 vod_id: `${e.dramaId}`,
                 vod_name: e.title,
                 vod_pic: e.coverUrl,
-                vod_remarks: e.subtitle,
+                vod_remarks: e.subtitle || '',
+                vod_duration: e.cornerMark || '',
                 ext: {
                     id: `${e.dramaId}`,
                 },
@@ -206,7 +210,6 @@ async function getPlayinfo(ext) {
             quality: quality,
             hevcOpen: 1,
             tria4k: 1,
-            // isAgeLimit: 0,
         }
 
         let headers = buildSignedHeaders({
@@ -214,21 +217,13 @@ async function getPlayinfo(ext) {
             url,
             params,
             deviceId,
-            token: argsify($config_str).token
-                ? argsify($config_str).token
-                : 'rrtv-bb3643e9bc9d62ebea4c30b20e7c313d5f57ab8a',
+            token: vipToken,
         })
-        // headers['umid'] = argsify($config_str).umid ? argsify($config_str).umid : '4E292B5D-FE99-4860-8054-5B0A11CC27AF'
 
         const { data } = await $fetch.get(`${url}?${sortedQueryString(params)}`, {
             headers,
         })
         const decryptedData = decrypt(data)
-        console.log(decryptedData)
-        // if (argsify(decryptedData).data.)
-        // let encryptedurl = argsify(decryptedData).data.tria4kPlayInfo
-        //     ? argsify(decryptedData).data.tria4kPlayInfo.url
-        //     : argsify(decryptedData).data.m3u8.url
         let encryptedurl = argsify(decryptedData).data.m3u8.url
         let newSign = argsify(decryptedData).data.newSign
 
@@ -242,7 +237,6 @@ async function getPlayinfo(ext) {
             }).toString(CryptoJS.enc.Utf8)
         }
         let playUrl = decryptUrl(encryptedurl, newSign)
-        // console.log(playUrl)
 
         return jsonify({ urls: [playUrl] })
     } catch (error) {
@@ -276,13 +270,14 @@ async function search(ext) {
         headers,
     })
     const decryptedData = decrypt(data)
-    // console.log(decryptedData)
+
     argsify(decryptedData).data.searchDramaList.forEach((e) => {
         cards.push({
             vod_id: `${e.id}`,
             vod_name: e.title,
             vod_pic: e.cover,
             vod_remarks: e.subtitle || '',
+            vod_duration: e.cornerMark || '',
             ext: {
                 id: `${e.id}`,
             },
@@ -294,12 +289,19 @@ async function search(ext) {
     })
 }
 
-function generateUUID() {
-    return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, (c) => {
-        const r = (Math.random() * 16) | 0
-        const v = c === 'x' ? r : (r & 0x3) | 0x8
-        return v.toString(16)
-    })
+async function getLatestToken() {
+    let postUrl = 'https://t.me/Jsforbaby/219'
+
+    const { data } = await $fetch.get(postUrl)
+    const $ = cheerio.load(data)
+    let text = $('meta[property="og:description"]').attr('content')
+    let umid = text.match(/UMID:\s+([0-9A-Fa-f]{8}-[0-9A-Fa-f]{4}-[0-9A-Fa-f]{4}-[0-9A-Fa-f]{4}-[0-9A-Fa-f]{12})/)[1]
+    let token = text.match(/Token:\s+(rrtv-[0-9a-fA-F]+)/)[1]
+
+    if (umid && token) {
+        deviceId = umid
+        vipToken = token
+    }
 }
 
 function sortedQueryString(params = {}) {
