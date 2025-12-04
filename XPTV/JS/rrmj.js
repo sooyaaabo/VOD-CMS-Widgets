@@ -95,7 +95,7 @@ let appConfig = {
 }
 
 async function getConfig() {
-    await getLatestToken()
+    // await getLatestToken()
     return jsonify(appConfig)
 }
 
@@ -199,6 +199,7 @@ async function getTracks(ext) {
 }
 
 async function getPlayinfo(ext) {
+    await getLatestToken()
     ext = argsify(ext)
     let { dramaId, episodeSid, quality } = ext
     let url = appConfig.site + `/m-station/drama/play`
