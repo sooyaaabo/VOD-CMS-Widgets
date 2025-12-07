@@ -13,6 +13,12 @@
             "ext": "https://gist.githubusercontent.com/occupy-pluto/e3a7bb98d5027d0f6dfa85fc2ac11a78/raw/6deb0475d295ac867ccb9c7cf3b1fb212a77abd7/agedm.js"
         },
         {
+            "name": "TV-Anime1",
+            "type": 3,
+            "api": "csp_anime1",
+            "ext": "https://raw.githubusercontent.com/Yswag/xptv-extensions/main/js/anime1.js"
+        },
+        {
             "name": "TV-Catflix",
             "type": 3,
             "api": "csp_catflix",
