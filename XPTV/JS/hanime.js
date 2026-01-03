@@ -1,8 +1,8 @@
 // 引用链接: https://raw.githubusercontent.com/fangkuia/XPTV/main/js/hanime.js
-//来自‘Y’
+//来自‘Y哥’
 const cheerio = createCheerio()
 
-const UA = 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36'
+const UA = 'Mozilla/5.0 (iPhone; CPU iPhone OS 18_2 like Mac OS X) AppleWebKit/604.1.14 (KHTML, like Gecko)'
 
 let appConfig = {
     ver: 1,
@@ -29,7 +29,10 @@ async function getTabs() {
         },
     })
     const $ = cheerio.load(data)
-
+    const t1 = $('title').text()
+      if (t1 === 'Just a moment...') {
+    $utils.openSafari(appConfig.site, UA)
+      }
     let allClass = $('#main-nav-home > a.nav-item')
 
     allClass.each((i, e) => {
@@ -70,20 +73,22 @@ async function getCards(ext) {
     })
 
     const $ = cheerio.load(data)
+    const t1 = $('title').text()
+      if (t1 === 'Just a moment...') {
+    $utils.openSafari(appConfig.site, UA)
+      }
     let videolist = $('.home-rows-videos-wrapper > a')
     if (videolist.length === 0) videolist = $('.content-padding-new > .row > .search-doujin-videos.col-xs-6')
 
     videolist.each((_, element) => {
     const href = $(element).attr('href') || $(element).find('.overlay').attr('href')
     
-    // 添加域名过滤 - 只保留 hanime1.me 的链接
     if (href && href.includes('://')) {
         const domainMatch = href.match(/https?:\/\/([^\/]+)/)
         if (domainMatch) {
             const domain = domainMatch[1]
-            // 只允许 hanime1.me 域名
             if (domain !== 'hanime1.me' && !domain.endsWith('.hanime1.me')) {
-                return // 跳过当前迭代
+                return 
             }
         }
     }
@@ -92,7 +97,6 @@ async function getCards(ext) {
     let cover = $(element).find('img').attr('src')
     if (cover && cover.includes('background')) cover = $(element).find('img').eq(1).attr('src')
     
-    // 处理相对路径
     let finalHref = href
     if (href && href.startsWith('/')) {
         finalHref = `https://hanime1.me${href}`
@@ -232,9 +236,9 @@ async function search(ext) {
         const domainMatch = href.match(/https?:\/\/([^\/]+)/)
         if (domainMatch) {
             const domain = domainMatch[1]
-            // 只允许 hanime1.me 域名
+
             if (domain !== 'hanime1.me' && !domain.endsWith('.hanime1.me')) {
-                return // 跳过当前迭代
+                return 
             }
         }
     }
