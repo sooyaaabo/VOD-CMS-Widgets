@@ -2,7 +2,7 @@
 //来自‘Y哥’
 const cheerio = createCheerio()
 
-const UA = 'Mozilla/5.0 (iPhone; CPU iPhone OS 18_2 like Mac OS X) AppleWebKit/604.1.14 (KHTML, like Gecko)'
+const UA = 'Mozilla/5.0 (iPhone; CPU iPhone OS 18_7 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/26.2 Mobile/15E148 Safari/604.1'
 
 let appConfig = {
     ver: 1,
@@ -17,44 +17,32 @@ async function getConfig() {
 }
 
 async function getTabs() {
-    let list = []
-    let ignore = ['新番預告', 'H漫畫', '無碼黃油'] 
-    function isIgnoreClassName(className) {
-        return ignore.some((element) => className.includes(element))
-    }
-
-    const { data } = await $fetch.get(appConfig.site, {
-        headers: {
-            'User-Agent': UA,
-        },
-    })
+    const { data } = await $fetch.get(appConfig.site, { headers: { 'User-Agent': UA } })
     const $ = cheerio.load(data)
-    const t1 = $('title').text()
-      if (t1 === 'Just a moment...') {
-    $utils.openSafari(appConfig.site, UA)
-      }
-    let allClass = $('#main-nav-home > a.nav-item')
-
-    allClass.each((i, e) => {
-        const name = $(e).text()
-        const href = $(e).attr('href')
-        const isIgnore = isIgnoreClassName(name)
-        if (isIgnore) return
-
-        let ui = 1
-        if (name.includes('裏番') || name.includes('泡麵番')) {
-            ui = 0 
+    
+    if ($('title').text().includes('Just a moment')) {
+        $utils.openSafari(appConfig.site, UA)
+        return []
+    }
+    
+    const list = []
+    $('#main-nav-home > a.nav-item').each((i, e) => {
+        const name = $(e).text().trim()
+        let href = $(e).attr('href')
+        
+        if (name.includes('新番預告') || name.includes('H漫畫') || name.includes('無碼黃油')) return
+        
+        if (href && href.startsWith('/')) {
+            href = 'https://hanime1.me' + href
         }
-
+        
         list.push({
             name,
-            ui: ui,
-            ext: {
-                url: encodeURI(href),
-            },
+            ui: name.includes('裏番') || name.includes('泡麵番') ? 0 : 1,
+            ext: { url: href }
         })
     })
-
+    
     return list
 }
 async function getCards(ext) {
@@ -76,6 +64,7 @@ async function getCards(ext) {
     const t1 = $('title').text()
       if (t1 === 'Just a moment...') {
     $utils.openSafari(appConfig.site, UA)
+           return []
       }
     let videolist = $('.home-rows-videos-wrapper > a')
     if (videolist.length === 0) videolist = $('.content-padding-new > .row > .search-doujin-videos.col-xs-6')
@@ -146,7 +135,6 @@ async function getTracks(ext) {
         })
     }
     
-    // 添加不同清晰度的选项
     sourceTags.each((index, element) => {
         const src = $(element).attr('src')
         const size = $(element).attr('size') || 'unknown'
@@ -195,7 +183,7 @@ async function getPlayinfo(ext) {
         
         playUrl = videoElement.attr('src')
     } else {
-        // 根据清晰度选择对应的source标签
+
         const sourceElement = videoElement.find(`source[size="${quality}"]`)
         if (sourceElement.length > 0) {
             playUrl = sourceElement.attr('src')
@@ -250,11 +238,11 @@ async function search(ext) {
     }
     
         cards.push({
-            ui: 1,
             vod_id: finalHref,
             vod_name: title,
             vod_pic: cover,
             vod_remarks: '',
+            ui: 1,
             ext: {
                 url: finalHref,
             },
