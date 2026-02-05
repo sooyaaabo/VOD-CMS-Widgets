@@ -1,33 +1,31 @@
 // 引用链接: https://raw.githubusercontent.com/2kuai/ForwardWidgets/main/Widgets/HotPicks.js
-const USER_AGENT = "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36";
-
 var WidgetMetadata = {
   id: "hot_picks",
   title: "热门精选",
   description: "获取最新热门影片推荐",
   author: "两块",
   site: "https://github.com/2kuai/ForwardWidgets",
-  version: "1.2.1",
+  version: "1.5.37",
   requiredVersion: "0.0.1",
   globalParams: [
     {
-      name: "TMDB_API_KEY",
-      title: "TMDB API 访问令牌",
-      type: "input"
-    },
+      name: "githubProxy",
+      title: "GitHub 加速源",
+      type: "input",
+      placeholders: [
+        { title: "ghproxy", value: "https://ghproxy.net/" }
+      ]
+    }
   ],
   modules: [
     {
       title: "实时榜单",
-      description: "实时热播剧榜单",
-      requiresWebView: false,
       functionName: "getTVRanking",
       params: [
         {
           name: "seriesType",
           title: "类型",
           type: "enumeration",
-          cacheDuration: 10800,
           enumOptions: [
             { title: "剧集", value: "tv" },
             { title: "综艺", value: "show" }
@@ -42,43 +40,35 @@ var WidgetMetadata = {
             { title: "优酷", value: "优酷" },
             { title: "爱奇艺", value: "爱奇艺" },
             { title: "腾讯视频", value: "腾讯视频" },
-            { title: "乐视视频", value: "乐视视频" },
-            { title: "搜狐视频", value: "搜狐视频" },
-            { title: "PPTV", value: "PPTV" },
             { title: "芒果TV", value: "芒果TV" }
           ]
         }
       ]
     },
     {
-        title: "悬疑剧场",
-        description: "获取悬疑剧场剧集信息",
-        requiresWebView: false,
-        functionName: "getSuspenseTheater",
-        cacheDuration: 86400,
-        params: [
+      title: "悬疑剧场",
+      functionName: "getSuspenseTheater",
+      params: [
         {
-            name: "status",
-            title: "类别",
-            type: "enumeration",
-            description: "选择剧集上映时间",
-            enumOptions: [
-                { title: "正在热播", value: "now_playing" },
-                { title: "即将上线", value: "coming_soon" }
-            ]
+          name: "status",
+          title: "类别",
+          type: "enumeration",
+          enumOptions: [
+            { title: "正在热播", value: "aired" },
+            { title: "即将上线", value: "upcoming" }
+          ]
         },
         {
-            name: "type",
-            title: "类型",
-            type: "enumeration",
-            description: "选择要查看的剧场类型",
-            enumOptions: [
-                { title: "全部剧场", value: "all" },
-                { title: "迷雾剧场", value: "迷雾剧场" },
-                { title: "白夜剧场", value: "白夜剧场" },
-                { title: "季风剧场", value: "季风剧场" },
-                { title: "X剧场", value: "X剧场" }
-            ]
+          name: "platformId",
+          title: "类型",
+          type: "enumeration",
+          enumOptions: [
+            { title: "全部剧场", value: "all" },
+            { title: "迷雾剧场", value: "迷雾剧场" },
+            { title: "白夜剧场", value: "白夜剧场" },
+            { title: "季风剧场", value: "季风剧场" },
+            { title: "X剧场", value: "X剧场" }
+          ]
         },
         {
           name: "sort_by",
@@ -93,20 +83,16 @@ var WidgetMetadata = {
     },
     {
       title: "院线电影",
-      description: "获取正在上映或即将上映的电影列表",
-      requiresWebView: false,
       functionName: "getMovies",
-      cacheDuration: 43200,
       params: [
         {
           name: "sort",
           title: "类型",
           type: "enumeration",
           enumOptions: [
-            { title: "正在热映", value: "nowplaying" },
-            { title: "即将上映", value: "coming" },
-            { title: "经典影片", value: "classics" },
-            { title: "年度电影", value: "yearly2025" }  
+            { title: "正在热映", value: "now_playing" },
+            { title: "即将上映", value: "coming_soon" },
+            { title: "经典影片", value: "top250" }
           ]
         },
         {
@@ -121,7 +107,7 @@ var WidgetMetadata = {
       ]
     },
     {
-      title: "电影推荐",  
+      title: "电影推荐",
       description: "最近热门电影推荐",
       requiresWebView: false,
       functionName: "getHotMovies",
@@ -154,7 +140,7 @@ var WidgetMetadata = {
           name: "rating",
           title: "评分",
           type: "input",
-          description: "设置最低评分过滤，例如：6"  
+          description: "设置最低评分过滤，例如：6"
         },
         {
           name: "offset",
@@ -202,43 +188,92 @@ var WidgetMetadata = {
   ]
 };
 
+// --- 工具类 ---
+const Utils = {
+  async fetch(url, options = {}) {
+    try {
+      const resp = await Widget.http.get(url, { 
+        headers: { "User-Agent": USER_AGENT, ...options.headers }, 
+        ...options 
+      });
+      return resp?.data;
+    } catch (e) {
+      console.error(`[Fetch Error] ${url}: ${e.message}`);
+      return null;
+    }
+  },
+  cleanTitle(title) {
+    if (!title) return "";
+    return title.replace(/([（(][^）)]*[)）])/g, '').replace(/剧场版|特别篇|动态漫|中文配音|中配|粤语版|国语版/g, '').replace(/第[0-9一二三四五六七八九十]+季/g, '').trim();
+  }
+};
+
+const GENRE_MAP = {
+    28: "动作", 12: "冒险", 16: "动画", 35: "喜剧", 80: "犯罪", 99: "纪录片", 18: "剧情", 10751: "家庭", 14: "奇幻", 36: "历史", 27: "恐怖", 10402: "音乐", 9648: "悬疑", 10749: "爱情", 878: "科幻", 10770: "电视电影", 53: "惊悚", 10752: "战争", 37: "西部", 10759: "动作冒险", 10762: "儿童", 10763: "新闻", 10764: "真人秀", 10765: "科幻奇幻", 10766: "肥皂剧", 10767: "脱口秀", 10768: "战争政治"
+};
+const USER_AGENT = "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36";
+
+
 // 实时榜单
 async function getTVRanking(params = {}) {
-    try {       
-        const response = await Widget.http.get(`https://raw.githubusercontent.com/2kuai/ForwardWidgets/refs/heads/main/data/maoyan-data.json`, {
-            headers: {
-                "User-Agent": USER_AGENT,
-                "referer": "https://piaofang.maoyan.com/dashboard/web-heat"
-            }
-        });
+  const proxy = params.githubProxy || "";
+  const data = await Utils.fetch(`${proxy}https://raw.githubusercontent.com/2kuai/ForwardWidgets/refs/heads/main/data/maoyan-data.json`);
+  if (!data) return [];
+  let list = (data[params.seriesType]?.[params.sort_by] || []);
+  return list;
+}
 
-        if (!response || !response.data) throw new Error("获取数据失败");
-        if (!response.data[params.seriesType] || !response.data[params.seriesType][params.sort_by]) throw new Error("获取剧场失败");
-
-        return response.data[params.seriesType][params.sort_by];
-
-    } catch (error) {
-        throw new Error(`获取榜单失败: ${error.message}`);
+// 悬疑剧场
+async function getSuspenseTheater(params = {}) {
+  const proxy = params.githubProxy || "";
+  const data = await Utils.fetch(`${proxy}https://raw.githubusercontent.com/2kuai/ForwardWidgets/main/data/theater-data.json`);
+  if (!data) return [];
+  const section = params.status; 
+  const theaterKeys = Object.keys(data).filter(key => key !== "last_updated");
+  let list = params.platformId === "all" 
+    ? theaterKeys.flatMap(k => data[k]?.[section] || []) 
+    : (data[params.platformId]?.[section] || []);
+  list.sort((a, b) => {
+    if (params.sort_by === "rating") {
+      return (b.rating || 0) - (a.rating || 0);
+    } else {
+      return new Date(b.releaseDate || 0) - new Date(a.releaseDate || 0);
     }
+  });
+  return list;
+}
+
+// 院线电影
+async function getMovies(params = {}) {
+  const proxy = params.githubProxy || "";
+  const data = await Utils.fetch(`${proxy}https://raw.githubusercontent.com/2kuai/ForwardWidgets/main/data/movies-data.json`);
+  if (!data) return [];
+  let list = (data[params.sort] || []).filter(i => i.posterPath);
+  list.sort((a, b) => {
+    if (params.sort_by === "rating") {
+      return (parseFloat(b.rating) || 0) - (parseFloat(a.rating) || 0);
+    } else {
+      return new Date(b.releaseDate || 0) - new Date(a.releaseDate || 0);
+    }
+  });
+  return list;
 }
 
 // 电影推荐
 async function getHotMovies(params = {}) {
     return getDoubanRecs(params, 'movie');
 }
-
 // 剧集推荐
 async function getHotTv(params = {}) {
     return getDoubanRecs(params, 'tv');
 }
-
 // 处理豆瓣推荐
 async function getDoubanRecs(params = {}, mediaType) {
     try {
         const rating = params.rating || "0";
         if (!/^\d$/.test(String(rating))) throw new Error("评分必须为 0～9 的整数");
         
-        const limit = 20;
+        const limit = 15;
         const offset = Number(params.offset) || 0;  // 添加默认值
         const category = params.category != null ? params.category : "tv";        
         const url = `https://m.douban.com/rexxar/api/v2/subject/recent_hot/${mediaType}?start=${offset}&limit=${limit}&category=${category}&type=${params.sort_by}&score_range=${rating},10`;
@@ -254,233 +289,44 @@ async function getDoubanRecs(params = {}, mediaType) {
             return [];  // 返回空数组而不是抛出错误
         }
 
-        // 添加错误处理，避免单个请求失败影响全部
-        const tmdbDetails = await Promise.all(
-            response.data.items.map(async item => {
-                try {
-                    return await getTmdbDetail(item.title, mediaType, params.TMDB_API_KEY);
-                } catch (error) {
-                    console.warn(`获取TMDB详情失败: ${item.title}`, error);
-                    return null;
-                }
-            })
-        );
-        
-        // 过滤掉null值
-        return tmdbDetails.filter(detail => detail !== null);
-
+        const tmdbDetails = [];
+        for (const item of response.data.items) {
+            const cacheKey = `dbid_${mediaType}_${item.id}`;
+            const cachedData = Widget.storage.get(cacheKey);
+            if (cachedData) {
+                tmdbDetails.push(JSON.parse(cachedData));
+                continue;
+            }
+            const detail = await getTmdbDetail(item.title, mediaType);
+            if (detail) {
+                tmdbDetails.push(detail);
+                Widget.storage.set(cacheKey, JSON.stringify(detail));
+            }
+        }
+        return tmdbDetails;
     } catch (error) {
         console.error("获取豆瓣推荐失败:", error);
         return [];  // 返回空数组而不是抛出错误
     }
 }
-
-// 悬疑剧场
-async function getSuspenseTheater(params = {}) {
+async function getTmdbDetail(title, mediaType) {
+  if (!title) return null;
+  const cleanTitle = Utils.cleanTitle(title);
   try {
-    const response = await Widget.http.get(
-      'https://raw.githubusercontent.com/2kuai/ForwardWidgets/main/data/theater-data.json',
-      {
-        headers: {
-          "User-Agent": USER_AGENT
-        }
-      }
-    );
-    
-    if (!response?.data) {
-      throw new Error("获取剧场数据失败");
-    }
-    
-    const data = response.data;
-    const type = params.type || "all"; // 默认全部剧场
-    const status = params.status || "now_playing"; // 默认正在热播
-    const sortBy = params.sort_by || "time"; // 默认按时间排序
-
-    // 状态映射
-    const statusMap = {
-      "now_playing": "aired",
-      "coming_soon": "upcoming"
+    const resp = await Widget.tmdb.get(`/search/${mediaType}`, { params: { query: cleanTitle, language: "zh-CN" } });
+    if (!resp?.results?.length) return null;
+    const matchedItem = resp.results[0];
+    return {
+      id: matchedItem.id,
+      type: "tmdb",
+      title: matchedItem.name || matchedItem.title,
+      description: matchedItem.overview,
+      posterPath: matchedItem.poster_path,
+      backdropPath: matchedItem.backdrop_path,
+      releaseDate: matchedItem.first_air_date || matchedItem.release_date,
+      rating: matchedItem.vote_average,
+      genreTitle: matchedItem.genre_ids.map(id => GENRE_MAP[id]).filter(Boolean).join(','),
+      mediaType: mediaType
     };
-    const section = statusMap[status] || "aired";
-
-    // 获取基础数据
-    let results = [];
-    if (type === "all") {
-      const theaters = ["迷雾剧场", "白夜剧场", "季风剧场", "X剧场"];
-      results = theaters.flatMap(theaterName => 
-        data[theaterName]?.[section] || []
-      );
-    } else {
-      if (!data[type]) {
-        throw new Error(`未找到 ${type} 剧场数据`);
-      }
-      
-      if (!data[type][section]) {
-        throw new Error(`${type} 剧场中没有 ${status} 数据`);
-      }
-      
-      results = data[type][section];
-    }
-
-    // 过滤无效数据
-    const filteredResults = results.filter(item => item.posterPath != null);
-
-    // 排序处理
-    switch (sortBy) {
-      case "time":
-        return filteredResults.sort((a, b) => 
-          new Date(b.releaseDate) - new Date(a.releaseDate)
-        );
-      case "rating":
-        return filteredResults.sort((a, b) => 
-          (b.rating || 0) - (a.rating || 0)
-        );
-      default:
-        return filteredResults;
-    }
-    
-  } catch (error) {
-    console.error(`获取剧场数据失败: ${error.message}`);
-    throw error;
-  }
+  } catch (e) { return null; }
 }
-
-
-// 院线电影
-async function getMovies(params = {}) {
-  try {
-    const type = params.sort;
-    const sortBy = params.sort_by; // 获取排序方式
-
-    const response = await Widget.http.get('https://raw.githubusercontent.com/2kuai/ForwardWidgets/main/data/movies-data.json', {
-      headers: {
-        "User-Agent": USER_AGENT
-      }
-    });
-    
-    if (!response?.data) throw new Error("获取院线数据失败");
-    
-    let results = response.data[type];
-    
-    if (!results?.length) throw new Error("没有更多数据");
-    
-    // 过滤掉没有海报的数据
-    results = results.filter(item => item.posterPath != null);
-    
-    // 根据 sort_by 参数排序
-    if (sortBy === 'time') {
-      results.sort((a, b) => new Date(b.releaseDate) - new Date(a.releaseDate));
-    } else if (sortBy === 'rating') {
-      results.sort((a, b) => (b.rating || 0) - (a.rating || 0));
-    }
-    
-    return results;
-  } catch (error) {
-    console.error(`[电影列表] 获取失败: ${error.message}`);
-    throw error;
-  }
-}
-
-
-// 通用剧名查询，例如：await getTmdbDetail("阿凡达（2019）", "movie")
-const getTmdbDetail = async (title, mediaType, key, options = {}) => {
-  if (!title?.trim() || !['tv', 'movie'].includes(mediaType)) {
-    console.error(`[TMDB] 参数错误: mediaType 必须为 'tv' 或 'movie'`);
-    return null;
-  }
-
-  const { language = "zh-CN" } = options;
-  const apiKey = key; // 从 params.TMDB_API_KEY 获取 API Key
-  
-  const yearMatch = title.match(/\b(19|20)\d{2}\b/)?.[0];
-
-  const cleanTitle = title
-    .replace(/([（(][^）)]*[)）])/g, '') // 移除中文括号及内容
-    .replace(/剧场版|特别篇|动态漫|中文配音|中配|粤语版|国语版/g, '') // 移除不需要的部分
-    .replace(/第[0-9一二三四五六七八九十]+季/g, '') // 移除季信息
-    .trim();
-
-  try {
-    let response;
-    let responseData; // 统一存储响应数据
-    
-    // 如果存在 API Key，使用 API 查询
-    if (apiKey) {
-      const searchUrl = `https://api.themoviedb.org/3/search/${mediaType}`;
-      const params = {
-        query: cleanTitle,
-        language: language,
-        include_adult: false
-      };
-
-      if (yearMatch) {
-        params.year = yearMatch;
-      }
-
-      // 将 API Key 放在 Header 中
-      const headers = {
-        "Authorization": `Bearer ${apiKey}`,
-        "Content-Type": "application/json;charset=utf-8"
-      };
-
-      response = await Widget.http.get(searchUrl, { 
-        params: params,
-        headers: headers
-      });
-      
-      // API Key 查询返回的是 response.data
-      responseData = response.data;
-      console.log(`[TMDB] 使用 API Key 查询: ${cleanTitle}`);
-    } else {
-      // 没有 API Key，使用内置查询
-      const params = {
-        query: cleanTitle,
-        language: language
-      };
-
-      if (yearMatch) {
-        params.year = yearMatch;
-      }
-
-      response = await Widget.tmdb.get(`/search/${mediaType}`, {params});
-      // 系统内置查询返回的是 response 本身
-      responseData = response;
-      console.log(`[TMDB] 使用内置查询: ${cleanTitle}`);
-    }
-
-    // 统一使用 responseData 来处理结果
-    if (!responseData?.results?.length) {
-      console.log(`[TMDB] 无返回数据`);
-      return null;
-    }
-
-    const results = responseData.results;
-
-    // 精确匹配逻辑
-    const exactMatch = results.find(
-      item => 
-        (item.name === cleanTitle || item.title === cleanTitle) ||
-        (item.original_name === cleanTitle || item.original_title === cleanTitle)
-    );
-
-    const matchedItem = exactMatch || results[0];
-    return formatTmdbResult(matchedItem, mediaType);
-  } catch (error) {
-    console.error(`[TMDB] 请求失败: ${error.message}`);
-    return null;
-  }
-};
-
-
-// 辅助函数：格式化 TMDB 返回的结果
-const formatTmdbResult = (item, mediaType) => ({
-  id: item.id,
-  type: "tmdb",
-  title: item.name ?? item.title,
-  description: item.overview,
-  posterPath: item.poster_path,
-  backdropPath: item.backdrop_path,
-  releaseDate: item.first_air_date ?? item.release_date,
-  rating: item.vote_average,
-  mediaType: mediaType
-});
