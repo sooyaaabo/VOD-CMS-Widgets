@@ -39,6 +39,7 @@ jobs:
           [kanav]="https://raw.githubusercontent.com/fangkuia/XPTV/main/js/kanav.js"
           [kbjfan]="https://raw.githubusercontent.com/Yswag/xptv-extensions/main/js/kbjfan.js"
           [koreapornmovie]="https://raw.githubusercontent.com/fangkuia/XPTV/main/js/KoreaPornMovie.js"
+          [javxx]="https://raw.githubusercontent.com/fangkuia/XPTV/main/js/javxx.js"
           [missav]="https://raw.githubusercontent.com/fangkuia/XPTV/main/js/missav.js"
           [pandatv]="https://raw.githubusercontent.com/fangkuia/XPTV/main/js/pandatv.js"
           [pornhub]="https://raw.githubusercontent.com/Yswag/xptv-extensions/main/js/pornhub.js"
