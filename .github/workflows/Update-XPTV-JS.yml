@@ -5,7 +5,7 @@ name: Update XPTV JS Files
 on:
   workflow_dispatch:
   schedule:
-    - cron: "0 */2 * * *"
+    - cron: "0 */12 * * *"
   push:
     paths:
       - ".github/workflows/Update-XPTV-JS.yml"
