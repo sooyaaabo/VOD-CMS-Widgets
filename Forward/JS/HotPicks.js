@@ -5,20 +5,23 @@ var WidgetMetadata = {
   description: "获取最新热门影片推荐",
   author: "两块",
   site: "https://github.com/2kuai/ForwardWidgets",
-  version: "1.5.51",
+  version: "1.5.7",
   requiredVersion: "0.0.1",
   globalParams: [
     {
       name: "githubProxy",
       title: "GitHub 加速源",
       type: "input",
-      placeholders: [{ title: "ghproxy", value: "https://ghproxy.net/" }]
+      placeholders: [
+        { title: "ghproxy", value: "https://ghproxy.net/" }
+      ]
     }
   ],
   modules: [
     {
       title: "实时榜单",
       functionName: "getTVRanking",
+      cacheDuration: 3600,
       params: [
         {
           name: "seriesType",
@@ -46,6 +49,7 @@ var WidgetMetadata = {
     {
       title: "悬疑剧场",
       functionName: "getSuspenseTheater",
+      cacheDuration: 43200,
       params: [
         {
           name: "status",
@@ -64,7 +68,6 @@ var WidgetMetadata = {
             { title: "全部剧场", value: "all" },
             { title: "迷雾剧场", value: "迷雾剧场" },
             { title: "白夜剧场", value: "白夜剧场" },
-            { title: "季风剧场", value: "季风剧场" },
             { title: "X剧场", value: "X剧场" }
           ]
         },
@@ -73,6 +76,8 @@ var WidgetMetadata = {
           title: "排序",
           type: "enumeration",
           enumOptions: [
+            { title: "排序", value: "default" },
+            { title: "按热度", value: "popularity" },
             { title: "按时间", value: "time" },
             { title: "按评分", value: "rating" }
           ]
@@ -82,6 +87,7 @@ var WidgetMetadata = {
     {
       title: "院线电影",
       functionName: "getMovies",
+      cacheDuration: 43200,
       params: [
         {
           name: "sort",
@@ -98,6 +104,8 @@ var WidgetMetadata = {
           title: "排序",
           type: "enumeration",
           enumOptions: [
+            { title: "排序", value: "default" },
+            { title: "按热度", value: "popularity" },
             { title: "按时间", value: "time" },
             { title: "按评分", value: "rating" }
           ]
@@ -107,7 +115,7 @@ var WidgetMetadata = {
     {
       title: "电影推荐",
       functionName: "getHotMovies",
-      cacheDuration: 3600,
+      cacheDuration: 43200,
       params: [
         {
           name: "sort_by",
@@ -126,14 +134,14 @@ var WidgetMetadata = {
     {
       title: "剧集推荐",
       functionName: "getHotTv",
-      cacheDuration: 3600,
+      cacheDuration: 43200,
       params: [
         {
           name: "sort_by",
           title: "类型",
           type: "enumeration",
           enumOptions: [
-            { title: "全部剧集", value: "tv" },
+            { title: "全部", value: "tv" },
             { title: "国产剧", value: "tv_domestic" },
             { title: "欧美剧", value: "tv_american" },
             { title: "日剧", value: "tv_japanese" },
@@ -151,7 +159,7 @@ var WidgetMetadata = {
 
 // --- 工具类 ---
 const Utils = {
-  emptyTips: [{ id: "empty", type: "text", title: "⚠️ 数据为空", description: "请刷新数据" }],
+  emptyTips: [{ id: "empty", type: "text", title: "⚠️ 请尝试刷新数据", description: "" }],
 
   async fetch(proxy, path) {
     const url = `${proxy || ""}${path}`;
@@ -164,15 +172,26 @@ const Utils = {
     }
   },
 
-  sortList(list, sortBy) {
+   sortList(list, sortBy) {
     if (!list || !Array.isArray(list) || list.length === 0) return [];
-    return list.sort((a, b) => {
+    
+    if (!sortBy || sortBy === "default") {
+      return list;
+    }
+
+    return [...list].sort((a, b) => {
       if (sortBy === "rating") {
         return (parseFloat(b.rating) || 0) - (parseFloat(a.rating) || 0);
       }
-      const dateA = a.releaseDate ? new Date(a.releaseDate) : 0;
-      const dateB = b.releaseDate ? new Date(b.releaseDate) : 0;
-      return dateB - dateA;
+      if (sortBy === "popularity") {
+        return (parseFloat(b.popularity) || 0) - (parseFloat(a.popularity) || 0);
+      }
+      if (sortBy === "time") {
+        const dateA = a.releaseDate ? new Date(a.releaseDate) : 0;
+        const dateB = b.releaseDate ? new Date(b.releaseDate) : 0;
+        return dateB - dateA;
+      }
+      return 0;
     });
   },
 
@@ -198,7 +217,7 @@ async function getTVRanking(params = {}) {
 async function getSuspenseTheater(params = {}) {
   const data = await Utils.fetch(params.githubProxy, "https://raw.githubusercontent.com/2kuai/ForwardWidgets/main/data/theater-data.json");
   if (!data) return Utils.emptyTips;
-  
+    
   const section = params.status;
   let list = params.platformId === "all" 
     ? Object.keys(data).filter(k => k !== "last_updated").flatMap(k => data[k]?.[section] || []) 
