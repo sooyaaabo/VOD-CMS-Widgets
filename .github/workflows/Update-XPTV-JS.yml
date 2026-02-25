@@ -89,6 +89,7 @@ jobs:
           [xingya]="https://raw.githubusercontent.com/Yswag/xptv-extensions/main/js/xingya.js"
           [ystt]="https://raw.githubusercontent.com/fangkuia/XPTV/main/js/ystt.js"
           [zxzj]="https://raw.githubusercontent.com/fangkuia/XPTV/main/js/zxzj.js"
+          [wwgz]="https://raw.githubusercontent.com/Yswag/xptv-extensions/main/js/wwgz.js"
           [jianpian]="https://raw.githubusercontent.com/Yswag/xptv-extensions/main/js/jianpian.js"
           [sgsd]="https://raw.githubusercontent.com/fangkuia/XPTV/main/js/sgsd.js"
           [girigirilove]="https://raw.githubusercontent.com/fangkuia/XPTV/main/js/ai.js"
