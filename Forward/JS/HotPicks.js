@@ -5,7 +5,7 @@ var WidgetMetadata = {
   description: "获取最新热门影片推荐",
   author: "两块",
   site: "https://github.com/2kuai/ForwardWidgets",
-  version: "1.5.7",
+  version: "1.5.8",
   requiredVersion: "0.0.1",
   globalParams: [
     {
@@ -18,6 +18,64 @@ var WidgetMetadata = {
     }
   ],
   modules: [
+    {
+      title: "电影推荐",
+      functionName: "getHotMovies",
+      cacheDuration: 43200,
+      params: [
+        {
+          name: "sort_by",
+          title: "地区",
+          type: "enumeration",
+          enumOptions: [
+            { title: "全部", value: "全部" },
+            { title: "华语", value: "华语" },
+            { title: "欧美", value: "欧美" },
+            { title: "韩国", value: "韩国" },
+            { title: "日本", value: "日本" }
+          ]
+        }
+      ]
+    },
+    {
+      title: "剧集推荐",
+      functionName: "getHotTv",
+      cacheDuration: 43200,
+      params: [
+        {
+          name: "sort_by",
+          title: "类型",
+          type: "enumeration",
+          enumOptions: [
+            { title: "全部", value: "tv" },
+            { title: "国产剧", value: "tv_domestic" },
+            { title: "欧美剧", value: "tv_american" },
+            { title: "日剧", value: "tv_japanese" },
+            { title: "韩剧", value: "tv_korean" },
+            { title: "动画", value: "tv_animation" },
+            { title: "纪录片", value: "tv_documentary" },
+            { title: "国内综艺", value: "show_domestic" },
+            { title: "国外综艺", value: "show_foreign" }
+          ]
+        }
+      ]
+    },
+    {
+      title: "动漫推荐",
+      functionName: "getAnimation",
+      cacheDuration: 43200,
+      params: [
+        {
+          name: "sort_by",
+          title: "类型",
+          type: "enumeration",
+          enumOptions: [
+            { title: "番剧", value: "anime" },
+            { title: "国创", value: "donghua" }
+          ]
+        }
+      ]
+    },
     {
       title: "实时榜单",
       functionName: "getTVRanking",
@@ -77,9 +135,9 @@ var WidgetMetadata = {
           type: "enumeration",
           enumOptions: [
             { title: "排序", value: "default" },
-            { title: "按热度", value: "popularity" },
-            { title: "按时间", value: "time" },
-            { title: "按评分", value: "rating" }
+            { title: "热度最高", value: "popularity" },
+            { title: "发布时间", value: "time" },
+            { title: "评分最高", value: "rating" }
           ]
         }
       ]
@@ -105,51 +163,9 @@ var WidgetMetadata = {
           type: "enumeration",
           enumOptions: [
             { title: "排序", value: "default" },
-            { title: "按热度", value: "popularity" },
-            { title: "按时间", value: "time" },
-            { title: "按评分", value: "rating" }
-          ]
-        }
-      ]
-    },
-    {
-      title: "电影推荐",
-      functionName: "getHotMovies",
-      cacheDuration: 43200,
-      params: [
-        {
-          name: "sort_by",
-          title: "地区",
-          type: "enumeration",
-          enumOptions: [
-            { title: "全部", value: "全部" },
-            { title: "华语", value: "华语" },
-            { title: "欧美", value: "欧美" },
-            { title: "韩国", value: "韩国" },
-            { title: "日本", value: "日本" }
-          ]
-        }
-      ]
-    },
-    {
-      title: "剧集推荐",
-      functionName: "getHotTv",
-      cacheDuration: 43200,
-      params: [
-        {
-          name: "sort_by",
-          title: "类型",
-          type: "enumeration",
-          enumOptions: [
-            { title: "全部", value: "tv" },
-            { title: "国产剧", value: "tv_domestic" },
-            { title: "欧美剧", value: "tv_american" },
-            { title: "日剧", value: "tv_japanese" },
-            { title: "韩剧", value: "tv_korean" },
-            { title: "动画", value: "tv_animation" },
-            { title: "纪录片", value: "tv_documentary" },
-            { title: "国内综艺", value: "show_domestic" },
-            { title: "国外综艺", value: "show_foreign" }
+            { title: "热度最高", value: "popularity" },
+            { title: "发布时间", value: "time" },
+            { title: "评分最高", value: "rating" }
           ]
         }
       ]
@@ -157,65 +173,59 @@ var WidgetMetadata = {
   ]
 };
 
-// --- 工具类 ---
 const Utils = {
-  emptyTips: [{ id: "empty", type: "text", title: "⚠️ 请尝试刷新数据", description: "" }],
+  emptyTips: [{ id: "empty", type: "text", title: "⚠️ 加载失败", description: "请检查网络或配置 GitHub 加速" }],
 
   async fetch(proxy, path) {
-    const url = `${proxy || ""}${path}`;
+    const url = `${proxy || ""}https://raw.githubusercontent.com/2kuai/ForwardWidgets/main/data/${path}`;
     try {
       const resp = await Widget.http.get(url);
-      return resp?.data || null;
+      if (!resp?.data) return this.emptyTips;
+      return resp.data;
     } catch (e) {
-      console.error(`[Fetch Error] ${url}: ${e.message}`);
-      return null;
+      console.error(`[Error] ${url}: ${e.message}`);
+      return this.emptyTips;
     }
   },
 
-   sortList(list, sortBy) {
-    if (!list || !Array.isArray(list) || list.length === 0) return [];
-    
-    if (!sortBy || sortBy === "default") {
-      return list;
+  sortList(list, sortBy) {
+    if (!list || !Array.isArray(list) || list.length === 0 || list[0].id === "empty") {
+      return list || [];
     }
+    
+    if (!sortBy || sortBy === "default") return list;
 
     return [...list].sort((a, b) => {
-      if (sortBy === "rating") {
-        return (parseFloat(b.rating) || 0) - (parseFloat(a.rating) || 0);
+      const valA = a[sortBy] || 0;
+      const valB = b[sortBy] || 0;
+
+      switch (sortBy) {
+        case "rating":
+        case "popularity":
+          return parseFloat(valB) - parseFloat(valA);
+        case "time":
+          return (b.releaseDate ? new Date(b.releaseDate) : 0) - (a.releaseDate ? new Date(a.releaseDate) : 0);
+        default:
+          return 0;
       }
-      if (sortBy === "popularity") {
-        return (parseFloat(b.popularity) || 0) - (parseFloat(a.popularity) || 0);
-      }
-      if (sortBy === "time") {
-        const dateA = a.releaseDate ? new Date(a.releaseDate) : 0;
-        const dateB = b.releaseDate ? new Date(b.releaseDate) : 0;
-        return dateB - dateA;
-      }
-      return 0;
     });
   },
-
-  // 结果检查：为空则返回统一提示
-  checkResult(list) {
-    return (list && Array.isArray(list) && list.length > 0) ? list : this.emptyTips;
-  }
 };
 
-// --- 模块函数 ---
 /**
  * 实时榜单
  */
 async function getTVRanking(params = {}) {
-  const data = await Utils.fetch(params.githubProxy, "https://raw.githubusercontent.com/2kuai/ForwardWidgets/refs/heads/main/data/maoyan-data.json");
+  const data = await Utils.fetch(params.githubProxy, "maoyan-data.json");
   const list = data?.[params.seriesType]?.[params.sort_by] || [];
-  return Utils.checkResult(list);
+  return list;
 }
 
 /**
  * 悬疑剧场
  */
 async function getSuspenseTheater(params = {}) {
-  const data = await Utils.fetch(params.githubProxy, "https://raw.githubusercontent.com/2kuai/ForwardWidgets/main/data/theater-data.json");
+  const data = await Utils.fetch(params.githubProxy, "theater-data.json");
   if (!data) return Utils.emptyTips;
     
   const section = params.status;
@@ -223,34 +233,43 @@ async function getSuspenseTheater(params = {}) {
     ? Object.keys(data).filter(k => k !== "last_updated").flatMap(k => data[k]?.[section] || []) 
     : (data[params.platformId]?.[section] || []);
   
-  return Utils.checkResult(Utils.sortList(list, params.sort_by));
+  return Utils.sortList(list, params.sort_by);
 }
 
 /**
  * 院线电影
  */
 async function getMovies(params = {}) {
-  const data = await Utils.fetch(params.githubProxy, "https://raw.githubusercontent.com/2kuai/ForwardWidgets/main/data/movies-data.json");
+  const data = await Utils.fetch(params.githubProxy, "douban_movie_data.json");
   if (!data) return Utils.emptyTips;
-  
-  const list = (data[params.sort] || []).filter(i => i.posterPath);
-  return Utils.checkResult(Utils.sortList(list, params.sort_by));
+  const list = data?.[params.sort] || [];
+  return Utils.sortList(list, params.sort_by);
 }
 
 /**
  * 电影推荐
  */
 async function getHotMovies(params = {}) {
-  const data = await Utils.fetch(params.githubProxy, "https://raw.githubusercontent.com/2kuai/ForwardWidgets/refs/heads/main/data/dbmovie-data.json");
+  const data = await Utils.fetch(params.githubProxy, "dbmovie-data.json");
   const list = data?.[params.sort_by] || [];
-  return Utils.checkResult(list);
+  return list;
 }
 
 /**
  * 剧集推荐
  */
 async function getHotTv(params = {}) {
-  const data = await Utils.fetch(params.githubProxy, "https://raw.githubusercontent.com/2kuai/ForwardWidgets/refs/heads/main/data/dbtv-data.json");
+  const data = await Utils.fetch(params.githubProxy, "dbtv-data.json");
   const list = data?.[params.sort_by] || [];
-  return Utils.checkResult(list);
+  return list;
 }
+
+/**
+ * 动漫推荐
+ */
+async function getAnimation(params = {}) {
+  const data = await Utils.fetch(params.githubProxy, "bilibili_animation_data.json");
+  const list = data?.[params.sort_by] || [];
+  return list;
+}
+
