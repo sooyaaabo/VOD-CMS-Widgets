@@ -5,7 +5,7 @@ var WidgetMetadata = {
   description: "获取最新热门影片推荐",
   author: "两块",
   site: "https://github.com/2kuai/ForwardWidgets",
-  version: "1.5.8",
+  version: "1.6.0",
   requiredVersion: "0.0.1",
   globalParams: [
     {
@@ -169,6 +169,52 @@ var WidgetMetadata = {
           ]
         }
       ]
+    },
+    {
+      title: "播出平台",
+      functionName: "getNetworks",
+      cacheDuration: 43200,
+      params: [
+        {
+          name: "with_networks",
+          title: "平台",
+          type: "enumeration",
+          enumOptions: [
+            { title: "Netflix", value: "213" },
+            { title: "HBO", value: "49" },
+            { title: "Apple TV+", value: "2552" },
+            { title: "Disney+", value: "2739" },
+            { title: "Amazon", value: "1024" },
+            { title: "Hulu", value: "453" },
+            { title: "腾讯视频", value: "2007" },
+            { title: "爱奇艺", value: "1330" },
+            { title: "优酷", value: "1419" },
+            { title: "芒果TV", value: "1631" },
+            { title: "Bilibili", value: "1605" }
+          ]
+        },
+        {
+          name: "sort_by",
+          title: "排序",
+          type: "enumeration",
+          enumOptions: [
+            { title: "全部", value: "" },
+            { title: "剧情", value: "18" },
+            { title: "科幻", value: "10765" },
+            { title: "动画", value: "16" },
+            { title: "喜剧", value: "35" },
+            { title: "动作", value: "10759" },
+            { title: "犯罪", value: "80" },
+            { title: "悬疑", value: "9648" },
+            { title: "纪录片", value: "99" }
+          ]
+        },
+        {
+          name: "page",
+          title: "页数",
+          type: "page"
+        }
+      ]
     }
   ]
 };
@@ -271,5 +317,57 @@ async function getAnimation(params = {}) {
   const data = await Utils.fetch(params.githubProxy, "bilibili_animation_data.json");
   const list = data?.[params.sort_by] || [];
   return list;
+}
+
+/**
+ * 播出平台
+ */
+ async function getNetworks(params) {
+  try {
+    const api = `discover/tv`;
+    
+    const queryParams = {
+      language: "zh-CN",
+      include_adult: false,
+      include_null_first_air_dates: false,
+      page: params.page || 1,
+      with_networks: params.with_networks,
+      sort_by: "popularity.desc"
+    };
+    
+    if (params.sort_by) queryParams.with_genres = params.sort_by;
+
+    const response = await Widget.tmdb.get(api, { params: queryParams });
+    if (!response || !response.results) {
+      throw new Error("获取数据失败");
+    }
+
+    const genreDict = {
+      10759: "动作冒险", 16: "动画", 35: "喜剧", 80: "犯罪", 99: "纪录",
+      18: "剧情", 10751: "家庭", 10762: "儿童", 9648: "悬疑", 10764: "真人秀",
+      10765: "Sci-Fi & Fantasy", 10766: "肥皂剧", 37: "西部"
+    };
+
+    return response.results
+      .filter(item => !item.genre_ids?.includes(10762)) 
+      .map(item => ({
+        id: item.id,
+        type: "tmdb",
+        title: item.name,
+        description: item.overview,
+        releaseDate: item.first_air_date,
+        backdropPath: item.backdrop_path,
+        posterPath: item.poster_path,
+        rating: item.vote_average,
+        mediaType: "tv",
+        genreTitle: (item.genre_ids || [])
+          .map(id => genreDict[id])
+          .filter(Boolean)
+          .join(", ")
+      }));
+  } catch (error) {
+    console.error("播出平台数据请求失败:", error);
+    throw error;
+  }
 }
 
