@@ -1,4 +1,12 @@
 // 引用链接: https://raw.githubusercontent.com/fangkuia/XPTV/main/js/missav.js
+async function getLocalInfo() {
+  const appConfig = {
+    ver: 1,
+    name: "玩偶哥哥(本地)",
+    api: "csp_wogg_local",
+  }
+  return jsonify(appConfig)
+}
 const UA = 'Mozilla/5.0 (iPhone; CPU iPhone OS 18_2 like Mac OS X) AppleWebKit/604.1.14 (KHTML, like Gecko)'
 const cheerio = createCheerio()
 /*
@@ -277,57 +285,107 @@ async function getConfig() {
     return jsonify(config)
 }
 
+
 async function getCards(ext) {
     ext = argsify(ext)
     let cards = []
-    let { page = 1, id } = ext
+    let { page = 1, id, filters = {} } = ext
+
     if (id == 'saved' && $config.length == 0) {
-        return jsonify({
-            list: [],
-        })
+        return jsonify({ list: [] })
     }
 
-    const url = appConfig.site + `/${id}?page=${page}`
+    let url = appConfig.site + `/${id}?page=${page}`
+    
+    if (filters.filters && filters.filters !== '') {
+        url += `&filters=${encodeURIComponent(filters.filters)}`
+    }
+    
+    if (filters.sort && filters.sort !== '') {
+        url += `&sort=${encodeURIComponent(filters.sort)}`
+    } else {
+        url += `&sort=released_at`  
+    }
+    
+    if (filters.keyword) {
+        url += `&keyword=${encodeURIComponent(filters.keyword)}`
+    }
+    
+    if (filters.actress) {
+        url += `&actress=${encodeURIComponent(filters.actress)}`
+    }
+    
+    if (filters.tag) {
+        url += `&tag=${encodeURIComponent(filters.tag)}`
+    }
+
+    console.log('Requesting:', url)
 
     const { data } = await $fetch.get(url, {
         headers: {
             'User-Agent': UA,
         },
     })
+    
     if (data.includes('Just a moment...')) {
         $utils.openSafari(url, UA)
     }
 
-    const $ = cheerio.load(data)
-
-    const videos = $('.thumbnail')
-
-    videos.each((_, e) => {
-        const href = $(e).find('.text-secondary').attr('href')
-        const title = $(e).find('.text-secondary').text().trim().replace(/\s+/g, ' ')
-        const cover = $(e).find('.w-full').attr('data-src')
-        const remarks = $(e).find('.left-1').text().trim()
-        const duration = $(e).find('.right-1').text().trim()
-        let obj = {
-            vod_id: href,
-            vod_name: title,
-            vod_pic: cover,
-            vod_remarks: remarks,
-            vod_duration: duration,
-
-            ext: {
-                url: href,
-            },
-        }
-
+   const $ = cheerio.load(data)
+   
+   const videos = $('.thumbnail')
+   
+   videos.each((_, e) => {
+       const href = $(e).find('.text-secondary').attr('href')
+       const title = $(e).find('.text-secondary').text().trim().replace(/\s+/g, ' ')
+       const cover = $(e).find('.w-full').attr('data-src')
+       const remarks = $(e).find('.left-1').text().trim()
+       const duration = $(e).find('.right-1').text().trim()
+       let obj = {
+           vod_id: href,
+           vod_name: title,
+           vod_pic: cover,
+           vod_remarks: remarks,
+           vod_duration: duration,
+   
+           ext: {
+               url: href,
+           },
+       }
         cards.push(obj)
     })
 
     return jsonify({
         list: cards,
+        filter: [
+            {
+                key: 'filters',  
+                name: '过滤',
+                init: '',      
+                value: [
+                    { n: '所有', v: '' },
+                    { n: '单人作品', v: 'individual' },
+                    { n: '多人作品', v: 'multiple' },
+                    { n: '中文字幕', v: 'chinese-subtitle' },
+                ],
+            },
+            {
+                key: 'sort',    
+                name: '排序',
+                init: 'released_at',  
+                value: [
+                    { n: '发行日期', v: 'released_at' },
+                    { n: '最近更新', v: 'published_at' },
+                    { n: '收藏数', v: 'saved' },
+                    { n: '今日浏览数', v: 'today_views' },
+                    { n: '本週浏览数', v: 'weekly_views' },
+                    { n: '本月浏览数', v: 'monthly_views' },
+                    { n: '总浏览数', v: 'views' },
+                ],
+            },
+        ],
     })
 }
-
 async function getTracks(ext) {
     ext = argsify(ext)
     let url = ext.url
