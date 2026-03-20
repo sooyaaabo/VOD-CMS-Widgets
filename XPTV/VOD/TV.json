@@ -121,7 +121,7 @@
             "ext": "https://raw.githubusercontent.com/Yswag/xptv-extensions/main/js/ppxys.js"
         },
         {
-            "name": "七色番动漫",
+            "name": "TV-七色番动漫",
             "type": 3,
             "api": "csp_7sefun",
             "ext": "https://raw.githubusercontent.com/Yswag/xptv-extensions/main/js/7sefun.js"
@@ -132,6 +132,12 @@
             "api": "csp_rrmj",
             "ext": "https://raw.githubusercontent.com/Yswag/xptv-extensions/main/js/rrmj.js"
         },
+        {
+            "name": "TV-山有木兮",
+            "type": 3,
+            "api": "csp_symx",
+            "ext": "https://raw.githubusercontent.com/Yswag/xptv-extensions/main/js/symx.js"
+        }
         {
             "name": "TV-烧火电影",
             "type": 3,

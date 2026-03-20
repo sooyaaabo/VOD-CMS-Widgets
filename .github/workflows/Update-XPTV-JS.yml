@@ -1,4 +1,4 @@
-# 2026-03-14 21:00
+# 2026-03-20 17:00
 
 name: Update XPTV JS Files
 
@@ -129,6 +129,7 @@ jobs:
           [mihdr]="https://raw.githubusercontent.com/Yswag/xptv-extensions/main/js/mihdr.js"
           [anime1]="https://raw.githubusercontent.com/Yswag/xptv-extensions/main/js/anime1.js"
           [7sefun]="https://raw.githubusercontent.com/Yswag/xptv-extensions/main/js/7sefun.js"
+          [symx]="https://raw.githubusercontent.com/Yswag/xptv-extensions/main/js/symx.js"
         )
         
         for js_name in "${!jsfiles[@]}"; do
