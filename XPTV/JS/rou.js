@@ -1,3 +1,228 @@
 // 引用链接: https://raw.githubusercontent.com/fangkuia/XPTV/main/js/rou.js
-429: Too Many Requests
-For more on scraping GitHub and how it may affect your rights, please review our Terms of Service (https://docs.github.com/en/site-policy/github-terms/github-terms-of-service).
+const cheerio = createCheerio()
+
+//来自群友“tou tie”
+
+// 设置User Agent，模拟iPhone浏览器
+const UA =
+    'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0.0.0 Safari/537.36 Edg/131.0.0.0'
+
+let appConfig = {
+    ver: 20260224,
+    title: '肉视频',
+    site: 'https://rou.video',
+    tabs: [
+        {
+            name: '國產AV',
+            ui: 1,
+            ext: {
+                url: 'https://rou.video/t/國產AV',
+            },
+        },
+        {
+            name: '探花',
+            ui: 1,
+            ext: {
+                url: 'https://rou.video/t/探花',
+            },
+        },
+        {
+            name: '自拍流出',
+            ui: 1,
+            ext: {
+                url: 'https://rou.video/t/自拍流出',
+            },
+        },
+        {
+            name: 'OnlyFans',
+            ui: 1,
+            ext: {
+                url: 'https://rou.video/t/OnlyFans',
+            },
+        },
+        {
+            name: '日本',
+            ui: 1,
+            ext: {
+                url: 'https://rou.video/t/日本',
+            },
+        },
+    ],
+}
+
+async function getConfig() {
+    let config = appConfig
+    return jsonify(config)
+}
+
+async function getCards(ext) {
+    ext = argsify(ext)
+    let cards = []
+    let { page = 1, url } = ext
+
+    if (page > 1) {
+        url += `?order=createdAt&page=${page}`
+    }
+
+    const { data } = await $fetch.get(url, {
+        headers: {
+            'User-Agent': UA,
+        },
+    })
+
+    const $ = cheerio.load(data)
+
+    $('.grid.grid-cols-2.mb-6 > div').each((_, element) => {
+        if ($(element).find('.relative').length == 0) return
+        const href = $(element).find('.relative a').attr('href')
+        const title = $(element).find('img:last').attr('alt')
+        const cover = $(element).find('img').attr('src')
+        const subTitle = $(element).find('.relative a > div:eq(1)').text()
+        const hdinfo = $(element).find('.relative a > div:first').text()
+        cards.push({
+            vod_id: href,
+            vod_name: title,
+            vod_pic: cover,
+            vod_remarks: subTitle || hdinfo,
+            ext: {
+                url: appConfig.site + href,
+            },
+        })
+    })
+
+    return jsonify({
+        list: cards,
+    })
+}
+
+async function getTracks(ext) {
+    ext = argsify(ext)
+    let tracks = []
+    const url = ext.url
+
+    const { data } = await $fetch.get(url, {
+        headers: {
+            'User-Agent': UA,
+        },
+    })
+    const $ = cheerio.load(data)
+    const scriptContent = $('#__NEXT_DATA__').html()
+    const jsonData = JSON.parse(scriptContent)
+    const ev = jsonData.props.pageProps.ev
+    const decodedEv = decodeEv(ev)
+
+    const playurl = decodedEv.videoUrl
+
+    function decodeEv(ev) {
+        const decoded = _atob(ev.d)
+            .split('')
+            .map((c) => String.fromCharCode(c.charCodeAt(0) - ev.k))
+            .join('')
+        return JSON.parse(decoded)
+    }
+
+    function _atob(b64) {
+        var chars = {
+            ascii: function () {
+                return 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/='
+            },
+            indices: function () {
+                if (!this.cache) {
+                    this.cache = {}
+                    var ascii = chars.ascii()
+
+                    for (var c = 0; c < ascii.length; c++) {
+                        var chr = ascii[c]
+                        this.cache[chr] = c
+                    }
+                }
+                return this.cache
+            },
+        }
+        var indices = chars.indices(),
+            pos = b64.indexOf('='),
+            padded = pos > -1,
+            len = padded ? pos : b64.length,
+            i = -1,
+            data = ''
+
+        while (i < len) {
+            var code =
+                (indices[b64[++i]] << 18) | (indices[b64[++i]] << 12) | (indices[b64[++i]] << 6) | indices[b64[++i]]
+            if (code !== 0) {
+                data += String.fromCharCode((code >>> 16) & 255, (code >>> 8) & 255, code & 255)
+            }
+        }
+
+        if (padded) {
+            data = data.slice(0, pos - b64.length)
+        }
+
+        return data
+    }
+
+    // let url = ext.url.match(/https?:\/\/rou\.video\/v\/(\w+)/)[1]
+    // let playUrl = `https://rou.video/api/v/${url}`
+    tracks.push({
+        name: '播放',
+        pan: '',
+        ext: {
+            url: playurl,
+        },
+    })
+
+    return jsonify({
+        list: [
+            {
+                title: '默认分组',
+                tracks,
+            },
+        ],
+    })
+}
+
+async function getPlayinfo(ext) {
+    ext = argsify(ext)
+    const playurl = ext.url.replace('.jpg', '.m3u8')
+
+    return jsonify({ urls: [playurl], headers: [{ 'User-Agent': UA }] })
+}
+
+async function search(ext) {
+    ext = argsify(ext)
+    let cards = []
+
+    let text = encodeURIComponent(ext.text)
+    let page = ext.page || 1
+    let url = `${appConfig.site}/search?q=${text}&t=&page=${page}`
+
+    const { data } = await $fetch.get(url, {
+        headers: {
+            'User-Agent': UA,
+        },
+    })
+
+    const $ = cheerio.load(data)
+
+    $('.grid.grid-cols-2.mb-6 > div').each((_, element) => {
+        if ($(element).find('.relative').length == 0) return
+        const href = $(element).find('.relative a').attr('href')
+        const title = $(element).find('img:last').attr('alt')
+        const cover = $(element).find('img').attr('src')
+        const subTitle = $(element).find('.relative a > div:eq(1)').text()
+        const hdinfo = $(element).find('.relative a > div:first').text()
+        cards.push({
+            vod_id: href,
+            vod_name: title,
+            vod_pic: cover,
+            vod_remarks: subTitle || hdinfo,
+            ext: {
+                url: appConfig.site + href,
+            },
+        })
+    })
+
+    return jsonify({
+        list: cards,
+    })
+}
