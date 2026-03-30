@@ -404,6 +404,7 @@ async function getTracks(ext) {
         const { data: data1 } = await $fetch.get(m3u8Prefix + uuid + m3u8Suffix, {
             headers: {
                 'User-Agent': UA,
+                'Referer': url
             }
         })
         const lines = data1.split('\n');
@@ -441,7 +442,11 @@ async function getPlayinfo(ext) {
     ext = argsify(ext)
     const url = ext.url
 
-    return jsonify({ urls: [url] })
+    return jsonify({ urls: [url],
+        headers: [{
+            'User-Agent': UA,
+            'Referer': appConfig.site
+        }] })
 }
 
 async function search(ext) {
