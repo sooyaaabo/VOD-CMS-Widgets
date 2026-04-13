@@ -318,7 +318,7 @@ async function getPlayinfo(ext) {
         const jxUrl = playerConfig[from] && playerConfig[from].parse ? playerConfig[from].parse : ''
 
         if (!jxUrl) {
-            const indexUrl = `${appConfig.site}/addons/dp/player/index.php?key=0&id=${id}&uid=0&from=${from}&url=${videoUrl}}`
+            const indexUrl = `${appConfig.site}/addons/dp/player/index.php?key=0&id=${id}&uid=0&from=${from}&url=${videoUrl}`
             const { data: indexData } = await $fetch.get(indexUrl, {
                 headers: {
                     'User-Agent': UA,
@@ -335,6 +335,27 @@ async function getPlayinfo(ext) {
                 const config = new Function('return ' + artData.match(/config\s*=\s*({[\s\S]*?})\s*if\s*\(/)[1])()
                 const playUrl = config.url
                 return jsonify({ urls: [playUrl], headers: [{ 'User-Agent': UA }] })
+            } else {
+                // Handle dp.php or other player pages
+                const { data: playerData } = await $fetch.get(playerUrl, {
+                    headers: {
+                        'User-Agent': UA,
+                    },
+                })
+                // Try to extract config object from playerData
+                const configMatch = playerData.match(/config\s*=\s*(\{[\s\S]*?\})\s*(?:;|if\s*\()/)
+                if (configMatch) {
+                    const config = new Function('return ' + configMatch[1])()
+                    const playUrl = config.url
+                    return jsonify({ urls: [playUrl], headers: [{ 'User-Agent': UA }] })
+                }
+                // Fallback: try to find direct video URL
+                const videoMatch = playerData.match(/https?:\/\/[^\s"']+\.(?:mp4|m3u8|flv)/)
+                if (videoMatch) {
+                    return jsonify({ urls: [videoMatch[0]], headers: [{ 'User-Agent': UA }] })
+                }
+                // If nothing found, return empty array
+                return jsonify({ urls: [], headers: [{ 'User-Agent': UA }] })
             }
         } else if (jxUrl && jxUrl.includes('ec.php')) {
             const { data: jxData } = await $fetch.get(jxUrl + videoUrl, {
@@ -361,6 +382,8 @@ async function getPlayinfo(ext) {
     } else if (config.url.endsWith('.m3u8')) {
         return jsonify({ urls: [config.url], headers: [{ 'User-Agent': UA }] })
     }
+    // Default return for unmatched cases
+    return jsonify({ urls: [], headers: [{ 'User-Agent': UA }] })
 }
 
 async function search(ext) {

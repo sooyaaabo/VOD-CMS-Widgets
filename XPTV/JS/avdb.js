@@ -114,13 +114,42 @@ async function getPlayinfo(ext) {
             Referer: `https://avdbapi.com/`,
         },
     })
-    let obj = data.match(/playerInstance\.setup\(\s*(\{[\s\S]*?\})\s*\);/)[1]
-    const aboutlink = obj.match(/aboutlink:\s*["']([^"']+)["']/)[1]
-    const file = obj.match(/file:\s*["']([^"']+)["']/)[1]
-
-    let playUrl = aboutlink + file
-
-    return jsonify({ urls: [playUrl], headers: [{ 'User-Agent': UA, Referer: `${url}/` }] })
+    // Match P.setup (used by upload18.org) or playerInstance.setup (legacy)
+    let match = data.match(/(?:P|playerInstance)\.setup\(\s*(\{[\s\S]*?\})\s*\);/) ||
+                data.match(/\.setup\(\s*(\{[\s\S]*?\})\s*\);/);
+    if (!match) {
+        console.log('[getPlayinfo] Could not find setup call in page');
+        // Fallback: try to extract m3u8 URL directly
+        const m3u8Match = data.match(/_m3u8Url\s*=\s*["']([^"']+)["']/) ||
+                          data.match(/file:\s*["']([^"']+\.m3u8[^"']*)["']/);
+        if (m3u8Match) {
+            console.log('[getPlayinfo] Found direct m3u8 URL:', m3u8Match[1]);
+            return jsonify({ urls: [m3u8Match[1]], headers: [{ 'User-Agent': UA, Referer: `${url}/` }] });
+        }
+        throw new Error('No setup call or m3u8 URL found');
+    }
+    let obj = match[1]
+    console.log('[getPlayinfo] Found setup object:', obj.substring(0, 200))
+    
+    const aboutlinkMatch = obj.match(/aboutlink:\s*["']([^"']+)["']/)
+    // file is a variable (fileUrl) in the setup object, so we need to extract the actual m3u8 URL
+    
+    // Extract PLAYER_CONFIG.m3u8 from the page
+    const configMatch = data.match(/window\.PLAYER_CONFIG\s*=\s*\{[\s\S]*?m3u8:\s*["']([^"']+)["']/)
+    if (!configMatch) {
+        console.log('[getPlayinfo] Could not find PLAYER_CONFIG.m3u8')
+        throw new Error('No m3u8 URL found in page')
+    }
+    
+    let m3u8Path = configMatch[1]
+    // If it's a relative path, prepend the origin
+    if (m3u8Path.startsWith('/')) {
+        const urlObj = new URL(url)
+        m3u8Path = urlObj.origin + m3u8Path
+    }
+    
+    console.log('[getPlayinfo] Found m3u8 URL:', m3u8Path)
+    return jsonify({ urls: [m3u8Path], headers: [{ 'User-Agent': UA, Referer: `${url}/` }] })
 }
 
 async function search(ext) {
