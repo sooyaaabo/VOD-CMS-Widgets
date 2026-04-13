@@ -151,12 +151,6 @@
             "ext": "https://raw.githubusercontent.com/Yswag/xptv-extensions/main/js/xiaohys.js"
         },
         {
-            "name": "TV-小苹果",
-            "type": 3,
-            "api": "csp_apple",
-            "ext": "https://raw.githubusercontent.com/Yswag/xptv-extensions/main/js/apple.js"
-        },
-        {
             "name": "TV-星芽短剧",
             "type": 3,
             "api": "csp_xingya",
