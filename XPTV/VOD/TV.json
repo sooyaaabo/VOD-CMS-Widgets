@@ -55,6 +55,12 @@
             "ext": "https://raw.githubusercontent.com/fangkuia/XPTV/main/js/bdys.js"
         },
         {
+            "name": "TV-茶杯狐",
+            "type": 3,
+            "api": "csp_cupfox",
+            "ext": "https://raw.githubusercontent.com/Yswag/xptv-extensions/main/js/cupfox.js"
+        },
+        {
             "name": "TV-厂长资源",
             "type": 3,
             "api": "csp_czzy",
