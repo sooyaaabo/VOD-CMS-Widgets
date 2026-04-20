@@ -1,4 +1,12 @@
 // 引用链接: https://raw.githubusercontent.com/Yswag/xptv-extensions/main/js/aowu.js
+async function getLocalInfo(ext) {
+    return jsonify({
+        ver: 20240413,
+        name: 'aowu',
+        site: 'https://www.aowu.tv'
+    });
+}
+
 const cheerio = createCheerio()
 const CryptoJS = createCryptoJS()
 
@@ -90,11 +98,43 @@ async function getTracks(ext) {
     let list = []
     let url = ext.url
 
-    const { data } = await $fetch.get(url, {
+    // 先请求页面，可能返回 cookie 验证
+    let resp = await $fetch.get(url, {
         headers: {
             'User-Agent': UA,
         },
     })
+    
+    let data = resp.data
+    
+    // 检查是否需要 cookie 验证
+    if (data.includes('fl_js_validator') && data.includes('document.cookie')) {
+        // 从响应中提取 cookie
+        let cookieMatch = data.match(/document\.cookie\s*=\s*"([^"]+)"/)
+        if (cookieMatch) {
+            let cookieStr = cookieMatch[1]
+            // 添加随机参数避免缓存
+            let sep = url.includes('?') ? '&' : '?'
+            let noCacheUrl = url + sep + '_t=' + Date.now()
+            // 带上 cookie 重新请求
+            resp = await $fetch.get(noCacheUrl, {
+                headers: {
+                    'User-Agent': UA,
+                    'Cookie': cookieStr,
+                },
+            })
+            data = resp.data
+        }
+    }
+    
+    // 检查是否是 JSON 字符串形式的 HTML
+    if (typeof data === 'string' && data.startsWith('"') && data.endsWith('"')) {
+        try {
+            data = JSON.parse(data)
+        } catch (e) {
+            // 如果解析失败，保持原样
+        }
+    }
 
     const $ = cheerio.load(data)
 
@@ -137,13 +177,45 @@ async function getTracks(ext) {
 
 async function getPlayinfo(ext) {
     ext = argsify(ext)
-    const url = ext.url
+    let url = ext.url
 
-    const { data } = await $fetch.get(url, {
+    // 先请求页面，可能返回 cookie 验证
+    let resp = await $fetch.get(url, {
         headers: {
             'User-Agent': UA,
         },
     })
+    
+    let data = resp.data
+    
+    // 检查是否需要 cookie 验证
+    if (data.includes('fl_js_validator') && data.includes('document.cookie')) {
+        // 从响应中提取 cookie
+        let cookieMatch = data.match(/document\.cookie\s*=\s*"([^"]+)"/)
+        if (cookieMatch) {
+            let cookieStr = cookieMatch[1]
+            // 添加随机参数避免缓存
+            let sep = url.includes('?') ? '&' : '?'
+            let noCacheUrl = url + sep + '_t=' + Date.now()
+            // 带上 cookie 重新请求
+            resp = await $fetch.get(noCacheUrl, {
+                headers: {
+                    'User-Agent': UA,
+                    'Cookie': cookieStr,
+                },
+            })
+            data = resp.data
+        }
+    }
+    
+    // 检查是否是 JSON 字符串形式的 HTML
+    if (typeof data === 'string' && data.startsWith('"') && data.endsWith('"')) {
+        try {
+            data = JSON.parse(data)
+        } catch (e) {
+            // 如果解析失败，保持原样
+        }
+    }
 
     try {
         const $ = cheerio.load(data)
@@ -151,12 +223,34 @@ async function getPlayinfo(ext) {
         let purl = config.url
         if (config.encrypt == 2) purl = unescape(base64Decode(purl))
         const artPlayer = appConfig.site + `/player/?url=${purl}`
-        const { data: artRes } = await $fetch.get(artPlayer, {
+        
+        // 请求播放器页面，也需要处理 cookie 验证
+        let artResp = await $fetch.get(artPlayer, {
             headers: {
                 'User-Agent': UA,
                 Referer: url,
             },
         })
+        
+        let artRes = artResp.data
+        
+        // 检查播放器页面是否需要 cookie 验证
+        if (artRes && artRes.includes('fl_js_validator') && artRes.includes('document.cookie')) {
+            let cookieMatch = artRes.match(/document\.cookie\s*=\s*"([^"]+)"/)
+            if (cookieMatch) {
+                let cookieStr = cookieMatch[1]
+                let sep = artPlayer.includes('?') ? '&' : '?'
+                let noCacheUrl = artPlayer + sep + '_t=' + Date.now()
+                artResp = await $fetch.get(noCacheUrl, {
+                    headers: {
+                        'User-Agent': UA,
+                        'Cookie': cookieStr,
+                        Referer: url,
+                    },
+                })
+                artRes = artResp.data
+            }
+        }
 
         if (artRes) {
             function decryptAES(ciphertext, key) {
@@ -175,11 +269,16 @@ async function getPlayinfo(ext) {
                     return null
                 }
             }
-            const sessionKey = artRes.match(/const sessionKey\s=\s"([^"]+)"/)[1]
-            const encryptedUrl = artRes.match(/const encryptedUrl\s=\s"([^"]+)"/)[1]
-            const realUrl = decryptAES(encryptedUrl, sessionKey)
-
-            return jsonify({ urls: [realUrl] })
+            
+            let sessionKeyMatch = artRes.match(/const sessionKey\s=\s"([^"]+)"/)
+            let encryptedUrlMatch = artRes.match(/const encryptedUrl\s=\s"([^"]+)"/)
+            
+            if (sessionKeyMatch && encryptedUrlMatch) {
+                const sessionKey = sessionKeyMatch[1]
+                const encryptedUrl = encryptedUrlMatch[1]
+                const realUrl = decryptAES(encryptedUrl, sessionKey)
+                return jsonify({ urls: [realUrl] })
+            }
         }
     } catch (error) {
         $print(error)
@@ -192,128 +291,75 @@ async function search(ext) {
     try {
         ext = argsify(ext)
         let cards = []
-        // const ocrApi = 'https://api.nn.ci/ocr/b64/json'
-        // let cookie = 'PHPSESSID=' + generatePHPSESSID()
-
-        let text = encodeURIComponent(ext.text)
+        let text = encodeURIComponent(ext.text || ext.wd || '')
         let page = ext.page || 1
+        
+        // 使用正确的搜索URL
+        let url = `https://www.aowu.tv/vods/?wd=${text}`
         if (page > 1) {
-            return jsonify({
-                list: cards,
-            })
+            url += `&page=${page}`
         }
-
-        // let validate = appConfig.site + '/verify/index.html'
-        let url = appConfig.site + `/search/-------------.html?wd=${text}`
-
-        // let img = await $fetch.download(validate, {
-        //     headers: {
-        //         'User-Agent': UA,
-        //         cookie: cookie,
-        //     },
-        // })
-
-        // function binaryStringToBase64(binaryString) {
-        //     const byteArray = []
-        //     for (let i = 0; i < binaryString.length; i += 8) {
-        //         const byte = binaryString.slice(i, i + 8)
-        //         byteArray.push(parseInt(byte, 2)) // convert 8 bits to a byte
-        //     }
-
-        //     const uint8Array = new Uint8Array(byteArray)
-        //     const wordArray = CryptoJS.lib.WordArray.create(uint8Array)
-        //     return CryptoJS.enc.Base64.stringify(wordArray)
-        // }
-
-        // let b64 = binaryStringToBase64(img.data)
-
-        // let ocrRes = await $fetch.post(ocrApi, b64, {
-        //     headers: {
-        //         'User-Agent': UA,
-        //         cookie: cookie,
-        //     },
-        // })
-        // let vd = argsify(ocrRes.data).result
-
-        // let validateRes = await $fetch.post(
-        //     appConfig.site + `/index.php/ajax/verify_check?type=search&verify=${vd}`,
-        //     '',
-        //     {
-        //         headers: {
-        //             'user-agent': UA,
-        //             cookie: cookie,
-        //             referer: url,
-        //             'x-request-with': 'XMLHttpRequest',
-        //             'sec-fetch-site': 'same-origin',
-        //             origin: appConfig.site,
-        //             'sec-fetch-mode': 'cors',
-        //             'sec-fetch-dest': 'empty',
-        //         },
-        //     }
-        // )
-
-        // if (argsify(validateRes.data).msg === 'ok') {
-        //     let searchRes = await $fetch.get(url, {
-        //         headers: {
-        //             'user-agent': UA,
-        //             cookie: cookie,
-        //         },
-        //     })
-        //     let html = searchRes.data
-
-        //     const $ = cheerio.load(html)
-
-        //     $('.search-box').each((_, element) => {
-        //         const href = $(element).find('.left .public-list-exp').attr('href')
-        //         const title = $(element).find('.thumb-content .thumb-txt').text()
-        //         const cover = $(element).find('.left img').attr('data-src')
-        //         const subTitle = $(element).find('.left .public-list-prb').text()
-        //         cards.push({
-        //             vod_id: href,
-        //             vod_name: title,
-        //             vod_pic: cover,
-        //             vod_remarks: subTitle,
-        //             ext: {
-        //                 id: href.match(/play\/(.+)-1-1\.html/)[1],
-        //             },
-        //         })
-        //     })
-
-        //     return jsonify({
-        //         list: cards,
-        //     })
-        // }
-        let searchRes = await $fetch.get(url, {
+        
+        let resp = await $fetch.get(url, {
             headers: {
-                'user-agent': UA,
-                // cookie: cookie,
+                'User-Agent': UA,
             },
         })
-        let html = searchRes.data
-
-        const $ = cheerio.load(html)
-
-        $('.vod-detail').each((_, element) => {
-            const href = $(element).find('.detail-info > a').attr('href')
-            const title = $(element).find('.detail-pic img').attr('alt')
-            const cover = $(element).find('.detail-pic img').attr('data-src')
-            const subTitle = $(element).find('.slide-info-remarks.cor5').text()
-            cards.push({
-                vod_id: href,
-                vod_name: title,
-                vod_pic: cover,
-                vod_remarks: subTitle,
-                ext: {
-                    url: appConfig.site + href,
-                },
-            })
+        
+        let data = resp.data
+        
+        // 检查是否需要 cookie 验证
+        if (data.includes('fl_js_validator') && data.includes('document.cookie')) {
+            let cookieMatch = data.match(/document\.cookie\s*=\s*"([^"]+)"/)
+            if (cookieMatch) {
+                let cookieStr = cookieMatch[1]
+                let sep = url.includes('?') ? '&' : '?'
+                let noCacheUrl = url + '&_t=' + Date.now()
+                resp = await $fetch.get(noCacheUrl, {
+                    headers: {
+                        'User-Agent': UA,
+                        'Cookie': cookieStr,
+                    },
+                })
+                data = resp.data
+            }
+        }
+        
+        // 检查是否是 JSON 字符串形式的 HTML
+        if (typeof data === 'string' && data.startsWith('"') && data.endsWith('"')) {
+            try {
+                data = JSON.parse(data)
+            } catch (e) {}
+        }
+        
+        const $ = cheerio.load(data)
+        
+        // 解析搜索结果
+        $('.public-list-box, .module-item, .vod-detail').each((_, element) => {
+            const href = $(element).find('a').attr('href')
+            const title = $(element).find('img').attr('alt') || $(element).find('.title, .name, h3, .thumb-txt').text()
+            const cover = $(element).find('img').attr('data-src') || $(element).find('img').attr('src')
+            const remarks = $(element).find('.public-list-prb, .remarks, .score, .tag').text()
+            
+            if (href && title) {
+                cards.push({
+                    vod_id: href,
+                    vod_name: title.trim(),
+                    vod_pic: cover || '',
+                    vod_remarks: remarks ? remarks.trim() : '',
+                    ext: {
+                        url: appConfig.site + href,
+                    },
+                })
+            }
         })
-
+        
         return jsonify({
             list: cards,
         })
     } catch (error) {
         $print(error)
+        return jsonify({list: []})
     }
 }
 
