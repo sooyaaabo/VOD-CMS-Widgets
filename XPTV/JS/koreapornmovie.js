@@ -77,7 +77,7 @@ async function getTracks(ext) {
     })
     
     const $ = cheerio.load(data)
-    const videourl = $('.video-player').find('meta[itemprop="contentURL"]').attr('content') || $(element).find('video source[type="video/mp4"]').attr('src')
+    const videourl = $('.site-content').find('meta[itemprop="contentURL"]').attr('content') || $(element).find('video source[type="video/mp4"]').attr('src')
     if (videourl) {
         tracks.push({
             name: '播放',
