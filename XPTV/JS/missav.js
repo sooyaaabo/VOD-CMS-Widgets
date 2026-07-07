@@ -398,7 +398,7 @@ async function getTracks(ext) {
             'User-Agent': UA,
         },
     })
-    const match = data.match(/nineyu\.com\\\/(.+)\\\/seek\\\/_0\.jpg/)
+    const match = data.match(/surrit\.com\\\/(.+)\\\/seek\\\/_0\.jpg/)
     if (match && match[1]) {
         let uuid = match[1]
         const { data: data1 } = await $fetch.get(m3u8Prefix + uuid + m3u8Suffix, {
