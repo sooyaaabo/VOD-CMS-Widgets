@@ -1,17 +1,16 @@
-// 引用链接: https://raw.githubusercontent.com/fangkuia/XPTV/main/js/age.js
-//老登
+// 引用链接: https://gist.githubusercontent.com/occupy-pluto/e3a7bb98d5027d0f6dfa85fc2ac11a78/raw/6deb0475d295ac867ccb9c7cf3b1fb212a77abd7/agedm.js
 const cheerio = createCheerio()
 const UA = "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/130.0.0.0 Safari/537.36"
 const headers = {
-  'Referer': 'https://www.agedm.io/',
-  'Origin': 'https://www.agedm.io/',
+  'Referer': 'https://m.agedm.io/',
+  'Origin': 'https://m.agedm.io',
   'User-Agent': UA,
 }
 
 const appConfig = {
   ver: 1,
   title: "AGE",
-  site: "https://www.agedm.io/#/",
+  site: "https://m.agedm.io/#/",
   tabs: [{
     name: '最近更新',
     ext: {
@@ -140,3 +139,4 @@ async function search(ext) {
       list: cards,
   });
 }
+
