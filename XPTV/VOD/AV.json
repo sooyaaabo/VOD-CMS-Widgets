@@ -119,7 +119,7 @@
             "type": 3,
             "api": "csp_twivideo",
             "ext": "https://raw.githubusercontent.com/Yswag/xptv-extensions/main/js/twivideo.js"
-        }
+        },
         {
             "name": "AV-xHamster",
             "type": 3,
