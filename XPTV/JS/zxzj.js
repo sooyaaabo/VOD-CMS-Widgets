@@ -1,4 +1,4 @@
-// 引用链接: https://raw.githubusercontent.com/fangkuia/XPTV/main/js/zxzj.js
+// 引用链接: https://raw.githubusercontent.com/Yswag/xptv-extensions/main/js/zxzj.js
 const cheerio = createCheerio()
 
 const UA =
@@ -7,15 +7,19 @@ const UA =
 // Some responses come as JSON-encoded strings
 function unwrapHtml(data) {
     if (typeof data === 'string' && data.charCodeAt(0) === 34) {
-        try { return JSON.parse(data) } catch (e) { /* not json */ }
+        try {
+            return JSON.parse(data)
+        } catch (e) {
+            /* not json */
+        }
     }
     return data
 }
 
 const appConfig = {
-    ver: 20260426,
+    ver: 20260902,
     title: '在线之家',
-    site: 'https://www.zxzjhd.com',
+    site: 'https://www.zxzj.run',
     tabs: [
         {
             name: '电影',
@@ -55,388 +59,70 @@ const appConfig = {
         },
     ],
 }
+
+// 依網站實際 filter（按類型/按地區/按年份/按語言/按排序）重建；
+// 網站 URL 格式為 {tid}-{area}-{order}-{cateId}-{lang}----{page}---{year}
+const YEAR_VALUES = (() => {
+    const arr = []
+    for (let y = 2026; y >= 2000; y--) arr.push({ n: String(y), v: String(y) })
+    return arr
+})()
+
+const AREA_1 = '大陆,香港,台湾,欧美,韩国,日本,泰国,印度,俄罗斯,其他'.split(',')
+const AREA_2 = ['欧美']
+const AREA_3 = ['韩国']
+const AREA_4 = ['日本']
+const AREA_6 = '国产,日本,欧美,其他'.split(',')
+const LANG_1 = '英语,韩语,日语,法语,泰语,德语,印度语,国语,粤语,俄语,西班牙语,意大利语,其它'.split(',')
+const LANG_2 = ['英语', '法语']
+const LANG_3 = ['韩语']
+const LANG_4 = ['日语']
+const LANG_6 = '国语,日语,英语,其他'.split(',')
+
+function areaFilter(vals) {
+    return {
+        key: 'area',
+        name: '地区',
+        value: [{ n: '全部', v: '' }].concat(vals.map((v) => ({ n: v, v }))),
+    }
+}
+function langFilter(vals) {
+    return {
+        key: 'lang',
+        name: '语言',
+        value: [{ n: '全部', v: '' }].concat(vals.map((v) => ({ n: v, v }))),
+    }
+}
+function yearFilter() {
+    return {
+        key: 'year',
+        name: '年份',
+        value: [{ n: '全部', v: '' }].concat(YEAR_VALUES),
+    }
+}
+function orderFilter() {
+    return {
+        key: 'order',
+        name: '排序',
+        value: [
+            { n: '時間', v: 'time' },
+            { n: '人氣', v: 'hits' },
+            { n: '評分', v: 'score' },
+        ],
+    }
+}
+
 const filterList = {
-    1: [
-        {
-            key: 'cateId',
-            name: '分类',
-            value: [
-                { n: '全部', v: '' },
-                { n: '喜剧', v: '喜剧' },
-                { n: '爱情', v: '爱情' },
-                { n: '恐怖', v: '恐怖' },
-                { n: '动作', v: '动作' },
-                { n: '科幻', v: '科幻' },
-                { n: '剧情', v: '剧情' },
-                { n: '战争', v: '战争' },
-                { n: '警匪', v: '警匪' },
-                { n: '犯罪', v: '犯罪' },
-                { n: '动画', v: '动画' },
-                { n: '奇幻', v: '奇幻' },
-                { n: '冒险', v: '冒险' },
-                { n: '悬疑', v: '悬疑' },
-                { n: '惊悚', v: '惊悚' },
-                { n: '青春', v: '青春' },
-                { n: '情色', v: '情色' },
-            ],
-        },
-        {
-            key: 'area',
-            name: '地区',
-            value: [
-                { n: '全部', v: '' },
-                { n: '大陆', v: '大陆' },
-                { n: '香港', v: '香港' },
-                { n: '台湾', v: '台湾' },
-                { n: '欧美', v: '欧美' },
-                { n: '韩国', v: '韩国' },
-                { n: '日本', v: '日本' },
-                { n: '泰国', v: '泰国' },
-                { n: '印度', v: '印度' },
-                { n: '俄罗斯', v: '俄罗斯' },
-                { n: '其他', v: '其他' },
-            ],
-        },
-        {
-            key: 'year',
-            name: '年份',
-            value: [
-                { n: '全部', v: '' },
-                { n: '2023', v: '2023' },
-                { n: '2022', v: '2022' },
-                { n: '2021', v: '2021' },
-                { n: '2020', v: '2020' },
-                { n: '2019', v: '2019' },
-                { n: '2018', v: '2018' },
-                { n: '2017', v: '2017' },
-                { n: '2016', v: '2016' },
-                { n: '2015', v: '2015' },
-                { n: '2014', v: '2014' },
-                { n: '2013', v: '2013' },
-                { n: '2012', v: '2012' },
-                { n: '2011', v: '2011' },
-                { n: '2010', v: '2010' },
-                { n: '2009', v: '2009' },
-                { n: '2008', v: '2008' },
-                { n: '2007', v: '2007' },
-                { n: '2006', v: '2006' },
-                { n: '2005', v: '2005' },
-                { n: '2004', v: '2004' },
-                { n: '2003', v: '2003' },
-                { n: '2002', v: '2002' },
-                { n: '2001', v: '2001' },
-                { n: '2000', v: '2000' },
-            ],
-        },
-        {
-            key: 'order',
-            name: '排序',
-            value: [
-                { n: '時間', v: 'time' },
-                { n: '人氣', v: 'hits' },
-                { n: '評分', v: 'score' },
-            ],
-        },
-    ],
-    2: [
-        {
-            key: 'cateId',
-            name: '分类',
-            value: [
-                { n: '全部', v: '' },
-                { n: '剧情', v: '剧情' },
-                { n: '喜剧', v: '喜剧' },
-                { n: '爱情', v: '爱情' },
-                { n: '动作', v: '动作' },
-                { n: '悬疑', v: '悬疑' },
-                { n: '恐怖', v: '恐怖' },
-                { n: '奇幻', v: '奇幻' },
-                { n: '惊悚', v: '惊悚' },
-                { n: '犯罪', v: '犯罪' },
-                { n: '科幻', v: '科幻' },
-                { n: '音乐', v: '音乐' },
-                { n: '其他', v: '其他' },
-            ],
-        },
-        {
-            key: 'year',
-            name: '年份',
-            value: [
-                { n: '全部', v: '' },
-                { n: '2023', v: '2023' },
-                { n: '2022', v: '2022' },
-                { n: '2021', v: '2021' },
-                { n: '2020', v: '2020' },
-                { n: '2019', v: '2019' },
-                { n: '2018', v: '2018' },
-                { n: '2017', v: '2017' },
-                { n: '2016', v: '2016' },
-                { n: '2015', v: '2015' },
-                { n: '2014', v: '2014' },
-                { n: '2013', v: '2013' },
-                { n: '2012', v: '2012' },
-                { n: '2011', v: '2011' },
-                { n: '2010', v: '2010' },
-                { n: '2009', v: '2009' },
-                { n: '2008', v: '2008' },
-                { n: '2006', v: '2006' },
-                { n: '2005', v: '2005' },
-                { n: '2004', v: '2004' },
-            ],
-        },
-        {
-            key: 'order',
-            name: '排序',
-            value: [
-                { n: '時間', v: 'time' },
-                { n: '人氣', v: 'hits' },
-                { n: '評分', v: 'score' },
-            ],
-        },
-    ],
-    3: [
-        {
-            key: 'cateId',
-            name: '分类',
-            value: [
-                { n: '全部', v: '' },
-                { n: '剧情', v: '剧情' },
-                { n: '喜剧', v: '喜剧' },
-                { n: '爱情', v: '爱情' },
-                { n: '动作', v: '动作' },
-                { n: '悬疑', v: '悬疑' },
-                { n: '恐怖', v: '恐怖' },
-                { n: '奇幻', v: '奇幻' },
-                { n: '惊悚', v: '惊悚' },
-                { n: '犯罪', v: '犯罪' },
-                { n: '科幻', v: '科幻' },
-                { n: '音乐', v: '音乐' },
-                { n: '其他', v: '其他' },
-            ],
-        },
-        {
-            key: 'year',
-            name: '年份',
-            value: [
-                { n: '全部', v: '' },
-                { n: '2023', v: '2023' },
-                { n: '2022', v: '2022' },
-                { n: '2021', v: '2021' },
-                { n: '2020', v: '2020' },
-                { n: '2019', v: '2019' },
-                { n: '2018', v: '2018' },
-                { n: '2017', v: '2017' },
-                { n: '2016', v: '2016' },
-                { n: '2015', v: '2015' },
-                { n: '2014', v: '2014' },
-                { n: '2013', v: '2013' },
-                { n: '2012', v: '2012' },
-                { n: '2011', v: '2011' },
-                { n: '2010', v: '2010' },
-                { n: '2009', v: '2009' },
-                { n: '2008', v: '2008' },
-                { n: '2007', v: '2007' },
-                { n: '2006', v: '2006' },
-                { n: '2005', v: '2005' },
-                { n: '2004', v: '2004' },
-                { n: '2003', v: '2003' },
-                { n: '2002', v: '2002' },
-                { n: '2001', v: '2001' },
-                { n: '2000', v: '2000' },
-            ],
-        },
-        {
-            key: 'order',
-            name: '排序',
-            value: [
-                { n: '時間', v: 'time' },
-                { n: '人氣', v: 'hits' },
-                { n: '評分', v: 'score' },
-            ],
-        },
-    ],
-    4: [
-        {
-            key: 'cateId',
-            name: '分类',
-            value: [
-                { n: '全部', v: '' },
-                { n: '剧情', v: '剧情' },
-                { n: '喜剧', v: '喜剧' },
-                { n: '爱情', v: '爱情' },
-                { n: '动作', v: '动作' },
-                { n: '悬疑', v: '悬疑' },
-                { n: '恐怖', v: '恐怖' },
-                { n: '奇幻', v: '奇幻' },
-                { n: '惊悚', v: '惊悚' },
-                { n: '犯罪', v: '犯罪' },
-                { n: '科幻', v: '科幻' },
-                { n: '音乐', v: '音乐' },
-                { n: '其他', v: '其他' },
-            ],
-        },
-        {
-            key: 'year',
-            name: '年份',
-            value: [
-                { n: '全部', v: '' },
-                { n: '2023', v: '2023' },
-                { n: '2022', v: '2022' },
-                { n: '2021', v: '2021' },
-                { n: '2020', v: '2020' },
-                { n: '2019', v: '2019' },
-                { n: '2018', v: '2018' },
-                { n: '2017', v: '2017' },
-                { n: '2016', v: '2016' },
-                { n: '2015', v: '2015' },
-                { n: '2014', v: '2014' },
-                { n: '2013', v: '2013' },
-                { n: '2012', v: '2012' },
-                { n: '2011', v: '2011' },
-                { n: '2010', v: '2010' },
-                { n: '2009', v: '2009' },
-                { n: '2008', v: '2008' },
-                { n: '2007', v: '2007' },
-                { n: '2006', v: '2006' },
-                { n: '2005', v: '2005' },
-                { n: '2004', v: '2004' },
-                { n: '2003', v: '2003' },
-                { n: '2002', v: '2002' },
-                { n: '2001', v: '2001' },
-                { n: '2000', v: '2000' },
-            ],
-        },
-        {
-            key: 'order',
-            name: '排序',
-            value: [
-                { n: '時間', v: 'time' },
-                { n: '人氣', v: 'hits' },
-                { n: '評分', v: 'score' },
-            ],
-        },
-    ],
-    5: [
-        {
-            key: 'year',
-            name: '年份',
-            value: [
-                { n: '全部', v: '' },
-                { n: '2022', v: '2022' },
-                { n: '2021', v: '2021' },
-                { n: '2020', v: '2020' },
-                { n: '2019', v: '2019' },
-                { n: '2018', v: '2018' },
-                { n: '2017', v: '2017' },
-                { n: '2016', v: '2016' },
-                { n: '2015', v: '2015' },
-                { n: '2014', v: '2014' },
-                { n: '2013', v: '2013' },
-                { n: '2012', v: '2012' },
-                { n: '2011', v: '2011' },
-                { n: '2010', v: '2010' },
-                { n: '2009', v: '2009' },
-                { n: '2008', v: '2008' },
-                { n: '2007', v: '2007' },
-                { n: '2006', v: '2006' },
-                { n: '2005', v: '2005' },
-                { n: '2004', v: '2004' },
-                { n: '2003', v: '2003' },
-                { n: '2002', v: '2002' },
-                { n: '2001', v: '2001' },
-                { n: '2000', v: '2000' },
-            ],
-        },
-        {
-            key: 'order',
-            name: '排序',
-            value: [
-                { n: '時間', v: 'time' },
-                { n: '人氣', v: 'hits' },
-                { n: '評分', v: 'score' },
-            ],
-        },
-    ],
-    6: [
-        {
-            key: 'cateId',
-            name: '分类',
-            value: [
-                { n: '全部', v: '' },
-                { n: '情感', v: '情感' },
-                { n: '科幻', v: '科幻' },
-                { n: '热血', v: '热血' },
-                { n: '推理', v: '推理' },
-                { n: '搞笑', v: '搞笑' },
-                { n: '冒险', v: '冒险' },
-                { n: '萝莉', v: '萝莉' },
-                { n: '校园', v: '校园' },
-                { n: '动作', v: '动作' },
-                { n: '机战', v: '机战' },
-                { n: '运动', v: '运动' },
-                { n: '战争', v: '战争' },
-                { n: '少年', v: '少年' },
-                { n: '少女', v: '少女' },
-                { n: '社会', v: '社会' },
-                { n: '原创', v: '原创' },
-                { n: '亲子', v: '亲子' },
-                { n: '益智', v: '益智' },
-                { n: '励志', v: '励志' },
-                { n: '其他', v: '其他' },
-            ],
-        },
-        {
-            key: 'area',
-            name: '地区',
-            value: [
-                { n: '全部', v: '' },
-                { n: '国产', v: '国产' },
-                { n: '日本', v: '日本' },
-                { n: '欧美', v: '欧美' },
-                { n: '其他', v: '其他' },
-            ],
-        },
-        {
-            key: 'year',
-            name: '年份',
-            value: [
-                { n: '全部', v: '' },
-                { n: '2023', v: '2023' },
-                { n: '2022', v: '2022' },
-                { n: '2021', v: '2021' },
-                { n: '2020', v: '2020' },
-                { n: '2019', v: '2019' },
-                { n: '2018', v: '2018' },
-                { n: '2017', v: '2017' },
-                { n: '2016', v: '2016' },
-                { n: '2015', v: '2015' },
-                { n: '2014', v: '2014' },
-                { n: '2013', v: '2013' },
-                { n: '2012', v: '2012' },
-                { n: '2011', v: '2011' },
-                { n: '2010', v: '2010' },
-                { n: '2009', v: '2009' },
-                { n: '2008', v: '2008' },
-                { n: '2007', v: '2007' },
-                { n: '2006', v: '2006' },
-                { n: '2005', v: '2005' },
-                { n: '2004', v: '2004' },
-                { n: '2003', v: '2003' },
-                { n: '2002', v: '2002' },
-                { n: '2001', v: '2001' },
-                { n: '2000', v: '2000' },
-            ],
-        },
-        {
-            key: 'order',
-            name: '排序',
-            value: [
-                { n: '時間', v: 'time' },
-                { n: '人氣', v: 'hits' },
-                { n: '評分', v: 'score' },
-            ],
-        },
-    ],
+    1: [areaFilter(AREA_1), yearFilter(), langFilter(LANG_1), orderFilter()],
+    2: [areaFilter(AREA_2), yearFilter(), langFilter(LANG_2), orderFilter()],
+    3: [areaFilter(AREA_3), yearFilter(), langFilter(LANG_3), orderFilter()],
+    4: [areaFilter(AREA_4), yearFilter(), langFilter(LANG_4), orderFilter()],
+    5: [yearFilter(), orderFilter()],
+    6: [areaFilter(AREA_6), yearFilter(), langFilter(LANG_6), orderFilter()],
+}
+
+async function getLocalInfo() {
+    return jsonify({ ver: 1, name: '在线之家', api: 'zxzj', type: 3 })
 }
 
 async function getConfig() {
@@ -450,12 +136,12 @@ async function getCards(ext) {
     let page = ext.page || 1
 
     try {
-        var url = `${appConfig.site}/`
+        var url = `${appConfig.site}/vodshow/${id}-${''}-${''}-${''}-${''}----${page}---${''}.html`
 
         if (id > 0) {
-            const { area = '', order = '', cateId = '', year = '' } = ext?.filters || {}
+            const { area = '', order = '', cateId = '', lang = '', year = '' } = ext?.filters || {}
 
-            url = `${appConfig.site}/vodshow/${id}-${area}-${order}-${cateId}-----${page}---${year}.html`
+            url = `${appConfig.site}/vodshow/${id}-${area}-${order}-${cateId}-${lang}----${page}---${year}.html`
         }
 
         const { data } = await $fetch.get(url, {
@@ -563,7 +249,7 @@ async function getPlayinfo(ext) {
                     .call(atob(playurl), function (c) {
                         return '%' + ('00' + c.charCodeAt(0).toString(16)).slice(-2)
                     })
-                    .join('')
+                    .join(''),
             )
         }
 
@@ -571,7 +257,7 @@ async function getPlayinfo(ext) {
             return jsonify({ urls: [playurl] })
         }
 
-        // encrypt=3: fetch parse page to get result_v2
+        // encrypt=3: fetch parse page. 新站可能回 JSON（player-v2）或 HTML result_v2
         const { data: playData } = await $fetch.get(playurl, {
             headers: {
                 Accept: 'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8',
@@ -585,33 +271,42 @@ async function getPlayinfo(ext) {
             },
         })
 
-        const resultMatch = unwrapHtml(playData).match(/var result_v2\s*=\s*(\{[\s\S]*?\})\s*;/)
-        if (!resultMatch) {
-            $print('result_v2 not found, returning playurl directly')
-            return jsonify({ urls: [playurl] })
+        const body = unwrapHtml(playData)
+
+        // 1) JSON 回應：{code,data:{url,...}} 直接取 url
+        if (typeof body === 'string' && body.trim().charAt(0) === '{') {
+            try {
+                const jo = JSON.parse(body)
+                const durl =
+                    (jo.data && (jo.data.url || jo.data.m3u8 || jo.data.play || jo.data.playurl)) || jo.url || jo.m3u8
+                if (durl && (String(durl).indexOf('m3u8') >= 0 || String(durl).indexOf('mp4') >= 0)) {
+                    return jsonify({ urls: [String(durl)] })
+                }
+            } catch (e) {
+                /* not json object */
+            }
         }
 
-        const rJson = JSON.parse(resultMatch[1])
-        if (!rJson.data) {
-            $print('result_v2 has no data')
-            return jsonify({ urls: [] })
+        // 2) 舊站 HTML：result_v2
+        const resultMatch = body.match(/var result_v2\s*=\s*(\{[\s\S]*?\})\s*;/)
+        if (resultMatch) {
+            const rJson = JSON.parse(resultMatch[1])
+            if (rJson.data) {
+                let code = rJson.data.split('').reverse()
+                let temp = ''
+                for (let i = 0; i < code.length; i = i + 2) {
+                    temp += String.fromCharCode(parseInt(code[i] + code[i + 1], 16))
+                }
+                const purl = temp.substring(0, (temp.length - 7) / 2) + temp.substring((temp.length - 7) / 2 + 7)
+                if (purl.indexOf('m3u8') >= 0 || purl.indexOf('mp4') >= 0) {
+                    $print('***在线之家purl =====>' + purl)
+                    return jsonify({ urls: [purl] })
+                }
+            }
         }
 
-        let code = rJson.data.split('').reverse()
-        let temp = ''
-        for (let i = 0; i < code.length; i = i + 2) {
-            temp += String.fromCharCode(parseInt(code[i] + code[i + 1], 16))
-        }
-        const purl =
-            temp.substring(0, (temp.length - 7) / 2) + temp.substring((temp.length - 7) / 2 + 7)
-
-        if (purl.indexOf('m3u8') >= 0 || purl.indexOf('mp4') >= 0) {
-            $print('***在线之家purl =====>' + purl)
-            return jsonify({ urls: [purl] })
-        }
-
-        $print('decoded url is not m3u8/mp4: ' + purl)
-        return jsonify({ urls: [purl] })
+        // 3) 兜底：回傳 parse url（可能為站內解析頁）
+        return jsonify({ urls: [playurl] })
     } catch (error) {
         $print(error)
         return jsonify({ urls: [] })
