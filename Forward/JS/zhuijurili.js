@@ -249,7 +249,7 @@ WidgetMetadata = {
             ],
         },
     ],
-    version: "1.0.4",
+    version: "1.0.5",
     requiredVersion: "0.0.1",
     description: "解析追剧日历今/明日播出剧集/番剧/国漫/综艺、周历、各项榜单、今日推荐等【五折码：CHEAP.5;七折码：CHEAP】",
     author: "huangxd",
@@ -325,8 +325,37 @@ async function fetchImdbItems(scItems) {
         }
     });
 
-    // 等待所有请求完成
-    const items = (await Promise.all(promises)).filter(Boolean);
+    // 单条异常数据不应导致整个模块失败
+    const results = await Promise.allSettled(promises);
+    const items = [];
+    const errors = [];
+
+    results.forEach((result, index) => {
+        if (result.status === "fulfilled") {
+            if (result.value) {
+                items.push(result.value);
+            }
+            return;
+        }
+
+        const scItem = scItems[index];
+        const tmdbId = scItem ? (scItem.id ?? scItem.tmdb_id) : null;
+        const mediaType = scItem && scItem.hasOwnProperty("isMovie")
+            ? (scItem.isMovie ? "movie" : "tv")
+            : "tv";
+        const title = scItem ? (scItem.name ?? scItem.title ?? "未知标题") : "未知标题";
+        const reason = result.reason && result.reason.message
+            ? result.reason.message
+            : String(result.reason);
+
+        console.error(`TMDB 条目请求失败，已跳过：${title}（ID: ${tmdbId ?? "未知"}，类型: ${mediaType}）：${reason}`);
+        errors.push(result.reason);
+    });
+
+    // 全部请求失败时保留错误，避免服务故障被误显示为空列表
+    if (items.length === 0 && errors.length > 0) {
+        throw errors[0];
+    }
 
     return items;
 }
